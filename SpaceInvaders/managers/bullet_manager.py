@@ -1,98 +1,64 @@
 import pygame
-
 from entities.bullet import Bullet
-
-from config import (
-    BULLET_IMAGE,
-    BULLET_SPEED,
-    SHOOT_COOLDOWN
-)
-
+from entities.explosion import Explosion
 
 class BulletManager:
-    def __init__(self):
+    def __init__(self, player_cooldown=250):
+        self.player_bullets = []
+        self.enemy_bullets = []
+        self.explosions = []
+        
+        self.player_cooldown = player_cooldown
+        self.last_player_shot = 0
+        self.bullet_image = None
+        self.enemy_bullet_image = None
 
-        self.bullet_image = pygame.image.load(
-            str(BULLET_IMAGE)
-        ).convert_alpha()
+    def shoot_player(self, x, y, sound_manager=None):
+        now = pygame.time.get_ticks()
+        if now - self.last_player_shot >= self.player_cooldown:
+            bullet = Bullet(x, y, direction=-1, speed=9, damage=1, image=self.bullet_image)
+            self.player_bullets.append(bullet)
+            self.last_player_shot = now
+            if sound_manager and hasattr(sound_manager, 'play_shoot'):
+                sound_manager.play_shoot()
+            return True
+        return False
 
-        self.bullets = []
-
-        self.last_shot_time = 0
-
-    # ==================================================
-    # SHOOT
-    # ==================================================
-
-    def shoot(self, x, y):
-
-        current_time = pygame.time.get_ticks()
-
-        # Cooldown
-        if (
-            current_time
-            - self.last_shot_time
-            < SHOOT_COOLDOWN
-        ):
-            return False
-
-        bullet = Bullet(
-            image=self.bullet_image,
-            x=x,
-            y=y,
-            speed=BULLET_SPEED
-        )
-
-        self.bullets.append(
-            bullet
-        )
-
-        self.last_shot_time = current_time
-
+    def shoot_enemy(self, x, y, sound_manager=None):
+        bullet = Bullet(x, y, direction=1, speed=5, damage=1, color=(255, 60, 60), image=self.enemy_bullet_image)
+        self.enemy_bullets.append(bullet)
         return True
 
-    # ==================================================
-    # UPDATE
-    # ==================================================
+    def add_explosion(self, x, y):
+        self.explosions.append(Explosion(x, y))
 
-    def update(self):
+    def update(self, screen_height=600):
+        # 1. Cập nhật và dọn dẹp đạn người chơi
+        for b in self.player_bullets:
+            b.update()
+        self.player_bullets = [b for b in self.player_bullets if not b.is_outside(screen_height)]
 
-        for bullet in self.bullets:
-            bullet.update()
+        # 2. Cập nhật và dọn dẹp đạn kẻ địch
+        for b in self.enemy_bullets:
+            b.update()
+        self.enemy_bullets = [b for b in self.enemy_bullets if not b.is_outside(screen_height)]
 
-        # Xóa bullet ra ngoài màn hình
-        self.bullets = [
-            bullet
-            for bullet in self.bullets
-            if not bullet.is_outside()
-        ]
-
-    # ==================================================
-    # DRAW
-    # ==================================================
+        # 3. Cập nhật các hiệu ứng nổ
+        for exp in self.explosions:
+            exp.update()
+        self.explosions = [exp for exp in self.explosions if not exp.is_finished()]
 
     def draw(self, screen):
-
-        for bullet in self.bullets:
-            bullet.draw(screen)
-
-    # ==================================================
-    # REMOVE
-    # ==================================================
-
-    def remove(self, bullet):
-
-        if bullet in self.bullets:
-            self.bullets.remove(
-                bullet
-            )
-
-    # ==================================================
-    # RESET
-    # ==================================================
+        # Vẽ toàn bộ đạn và hiệu ứng nổ
+        for b in self.player_bullets:
+            b.draw(screen)
+        for b in self.enemy_bullets:
+            b.draw(screen)
+        for exp in self.explosions:
+            exp.draw(screen)
 
     def reset(self):
-
-        self.bullets.clear()
-
-        self.last_shot_time = 0
+        self.player_bullets.clear()
+        self.enemy_bullets.clear()
+        self.explosions.clear()
+        self.last_player_shot = 0

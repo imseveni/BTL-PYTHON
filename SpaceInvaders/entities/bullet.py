@@ -1,47 +1,27 @@
+import pygame
+
 class Bullet:
-    def __init__(
-        self,
-        image,
-        x,
-        y,
-        speed
-    ):
-
-        self.image = image
-
+    def __init__(self, x, y, direction=-1, speed=8, damage=1, color=None, image=None):
+        self.direction = direction
         self.speed = speed
-
-        self.rect = self.image.get_rect()
-
-        # Đạn xuất hiện ở giữa player
-        self.rect.midbottom = (
-            int(x),
-            int(y)
-        )
-
-    # ==================================================
-    # UPDATE
-    # ==================================================
+        self.damage = damage
+        
+        if image:
+            self.image = image
+        else:
+            self.image = pygame.Surface((4, 12))
+            if color:
+                self.image.fill(color)
+            else:
+                self.image.fill((255, 230, 0) if direction == -1 else (255, 80, 50))
+            
+        self.rect = self.image.get_rect(center=(x, y))
 
     def update(self):
-
-        self.rect.y -= self.speed
-
-    # ==================================================
-    # DRAW
-    # ==================================================
+        self.rect.y += self.speed * self.direction
 
     def draw(self, screen):
+        screen.blit(self.image, self.rect)
 
-        screen.blit(
-            self.image,
-            self.rect
-        )
-
-    # ==================================================
-    # CHECK OUTSIDE
-    # ==================================================
-
-    def is_outside(self):
-
-        return self.rect.bottom < 0
+    def is_outside(self, screen_height=600):
+        return self.rect.bottom < 0 or self.rect.top > screen_height
