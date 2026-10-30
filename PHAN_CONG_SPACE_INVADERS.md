@@ -132,7 +132,15 @@ Không bắt buộc phải đúng 100% cấu trúc này, nhưng nên giữ nguy�
 
 ---
 
-# THÀNH VIÊN 1 — GAME CORE + GAME STATE + LEVEL SYSTEM
+| Thành viên | Module chính | Phần phải làm | Mức độ |
+|:--:|:--:|:--:|:--:|
+| **Đạt** | Game Core + State | Game loop, trạng thái game, level, pause/restart, tích hợp module | Khá |
+| **Tuấn** | Player + Input | Player class, di chuyển, mạng sống, input, giới hạn màn hình, power-up | Khá |
+| **Duy** | Enemy System | Enemy class, spawn, movement, nhiều loại enemy, difficulty | Khá |
+| **Lộc** | Combat System | Bullet, collision, damage, score, explosion | Khá |
+| **Chiến** | UI + Audio + Save/High Score | Menu, HUD, game over, âm thanh, high score | Khá |
+
+# ĐẠT — GAME CORE + GAME STATE + LEVEL SYSTEM
 
 ## Vai trò chính
 
@@ -243,7 +251,7 @@ GAME_OVER
 RESTART
 ```
 
-Người 1 chịu trách nhiệm chuyển trạng thái đúng.
+Đạt chịu trách nhiệm chuyển trạng thái đúng.
 
 ---
 
@@ -344,7 +352,7 @@ Tiêu diệt toàn bộ enemy
 
 ---
 
-## Người 1 cần phối hợp với ai?
+## Đạt cần phối hợp với ai?
 
 Phải thống nhất interface với tất cả thành viên.
 
@@ -361,7 +369,7 @@ bullet_manager.update()
 bullet_manager.draw(screen)
 ```
 
-Người 1 **không nên sửa trực tiếp code của thành viên khác**, trừ khi đang xử lý tích hợp sau khi trao đổi.
+Đạt **không nên sửa trực tiếp code của thành viên khác**, trừ khi đang xử lý tích hợp sau khi trao đổi.
 
 ---
 
@@ -379,7 +387,7 @@ Người 1 **không nên sửa trực tiếp code của thành viên khác**, tr
 
 ---
 
-# THÀNH VIÊN 2 — PLAYER SYSTEM + INPUT + LIFE + POWER-UP
+# TUẤN — PLAYER SYSTEM + INPUT + LIFE + POWER-UP
 
 ## Vai trò chính
 
@@ -568,7 +576,7 @@ thay vì:
 1 viên đạn
 ```
 
-Phần bắn thực tế cần phối hợp với thành viên 4.
+Phần bắn thực tế cần phối hợp với Lộc.
 
 ---
 
@@ -603,7 +611,7 @@ self.x = SCREEN_WIDTH // 2
 
 ---
 
-# THÀNH VIÊN 3 — ENEMY SYSTEM + ENEMY MANAGER + DIFFICULTY
+# DUY — ENEMY SYSTEM + ENEMY MANAGER + DIFFICULTY
 
 ## Vai trò chính
 
@@ -811,7 +819,7 @@ random.choice(enemies)
 
 Sau đó tạo enemy bullet.
 
-Phải phối hợp với thành viên 4.
+Phải phối hợp với Lộc.
 
 ---
 
@@ -830,7 +838,7 @@ Phải phối hợp với thành viên 4.
 
 ---
 
-# THÀNH VIÊN 4 — BULLET + COMBAT + COLLISION + SCORE
+# LỘC — BULLET + COMBAT + COLLISION + SCORE
 
 ## Vai trò chính
 
@@ -1053,7 +1061,7 @@ Có thể:
 
 ---
 
-# THÀNH VIÊN 5 — UI + HUD + SOUND + HIGH SCORE
+# CHIẾN — UI + HUD + SOUND + HIGH SCORE
 
 ## Vai trò chính
 
@@ -1255,11 +1263,11 @@ Không cần làm menu settings quá phức tạp.
 
 | Thành viên | Module | Chức năng chính | Branch |
 |---|---|---|---|
-| Người 1 | Game Core | Game Loop, State, Level, Restart, Integration | `feature/game-core` |
-| Người 2 | Player | Movement, Input, Lives, Respawn, Power-up | `feature/player` |
-| Người 3 | Enemy | Enemy, Spawn, Movement, Difficulty | `feature/enemy` |
-| Người 4 | Combat | Bullet, Collision, Damage, Score | `feature/combat` |
-| Người 5 | UI/System | Menu, HUD, Sound, High Score | `feature/ui-system` |
+| Đạt | Game Core | Game Loop, State, Level, Restart, Integration | `feature/game-core` |
+| Tuấn | Player | Movement, Input, Lives, Respawn, Power-up | `feature/player` |
+| Duy | Enemy | Enemy, Spawn, Movement, Difficulty | `feature/enemy` |
+| Lộc | Combat | Bullet, Collision, Damage, Score | `feature/combat` |
+| Chiến | UI/System | Menu, HUD, Sound, High Score | `feature/ui-system` |
 
 ---
 
@@ -1845,12 +1853,12 @@ trong thời gian dài.
 Ví dụ:
 
 ```text
-Người 2 → player.py
-Người 3 → enemy.py
-Người 4 → bullet.py
+Tuấn → player.py
+Duy → enemy.py
+Lộc → bullet.py
 ```
 
-Người 1 chỉ kết nối sau.
+Đạt chỉ kết nối sau.
 
 Nếu cần sửa file người khác:
 
@@ -1985,7 +1993,7 @@ Mục tiêu:
 - Các class được tạo.
 - Import giữa các module không lỗi.
 
-Người 1 làm:
+Đạt làm:
 
 ```text
 Game Core
@@ -2219,7 +2227,7 @@ Mỗi thành viên chuẩn bị tối thiểu:
 
 # 24. GỢI Ý CÂU HỎI VẤN ĐÁP
 
-## Người 1
+## Đạt
 
 - Game Loop là gì?
 - `pygame.event.get()` dùng để làm gì?
@@ -2229,7 +2237,7 @@ Mỗi thành viên chuẩn bị tối thiểu:
 
 ---
 
-## Người 2
+## Tuấn
 
 - Player được di chuyển như thế nào?
 - Tại sao phải giới hạn tọa độ?
@@ -2239,7 +2247,7 @@ Mỗi thành viên chuẩn bị tối thiểu:
 
 ---
 
-## Người 3
+## Duy
 
 - Enemy đổi hướng bằng cách nào?
 - Vì sao cần Enemy Manager?
@@ -2249,7 +2257,7 @@ Mỗi thành viên chuẩn bị tối thiểu:
 
 ---
 
-## Người 4
+## Lộc
 
 - Bullet được lưu ở đâu?
 - Tại sao dùng list bullet?
@@ -2259,7 +2267,7 @@ Mỗi thành viên chuẩn bị tối thiểu:
 
 ---
 
-## Người 5
+## Chiến
 
 - HUD là gì?
 - `pygame.font` dùng như thế nào?
