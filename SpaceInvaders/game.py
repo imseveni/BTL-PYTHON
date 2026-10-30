@@ -7,6 +7,11 @@ from config import (
     BACKGROUND_IMAGE,
     ICON_IMAGE,
     GAME_OVER_Y,
+    LEVEL_SCORE_STEP,
+    STATE_MENU,
+    STATE_PLAYING,
+    STATE_PAUSED,
+    STATE_GAME_OVER,
     BLACK,
     WHITE
 )
@@ -69,6 +74,20 @@ class Game:
         self.clock = pygame.time.Clock()
 
         # ==================================================
+        # FONT (tạo 1 lần, không tạo lại mỗi frame)
+        # ==================================================
+
+        self.pause_font = pygame.font.Font(
+            None,
+            64
+        )
+
+        self.pause_sub_font = pygame.font.Font(
+            None,
+            32
+        )
+
+        # ==================================================
         # GAME OBJECT
         # ==================================================
 
@@ -104,7 +123,7 @@ class Game:
 
         self.running = True
 
-        self.state = "MENU"
+        self.state = STATE_MENU
 
         # ==================================================
         # MUSIC
@@ -113,8 +132,56 @@ class Game:
         self.sound_manager.play_music()
 
     # ==================================================
+    # CHANGE STATE
+    # ==================================================
+
+    def change_state(self, new_state):
+
+        self.state = new_state
+
+        # Dừng player khi rời khỏi trạng thái chơi,
+        # tránh việc tàu tiếp tục trượt sau khi resume
+        if new_state != STATE_PLAYING:
+
+            self.player.stop()
+
+    # ==================================================
+    # START GAME
+    # ==================================================
+
+    def start_game(self):
+
+        self.reset_game()
+
+        self.change_state(
+            STATE_PLAYING
+        )
+
+    # ==================================================
+    # TOGGLE PAUSE
+    # ==================================================
+
+    def toggle_pause(self):
+
+        if self.state == STATE_PLAYING:
+
+            self.change_state(
+                STATE_PAUSED
+            )
+
+        elif self.state == STATE_PAUSED:
+
+            self.change_state(
+                STATE_PLAYING
+            )
+
+    # ==================================================
     # HANDLE EVENTS
     # ==================================================
+    #
+    # Chỉ xử lý các phím "bấm một lần" (chuyển trạng thái).
+    # Di chuyển và bắn được xử lý ở handle_player_input()
+    # vì cần biết phím nào đang được GIỮ.
 
     def handle_events(self):
 
@@ -128,120 +195,93 @@ class Game:
 
                 self.running = False
 
-            # ==========================================
-            # KEY DOWN
-            # ==========================================
+                continue
 
-            if event.type == pygame.KEYDOWN:
+            if event.type != pygame.KEYDOWN:
 
-                # --------------------------------------
-                # MENU
-                # --------------------------------------
-
-                if self.state == "MENU":
-
-                    if event.key == pygame.K_RETURN:
-
-                        self.reset_game()
-
-                        self.state = "PLAYING"
-
-                    elif event.key == pygame.K_ESCAPE:
-
-                        self.running = False
-
-                    continue
-
-                # --------------------------------------
-                # GAME OVER
-                # --------------------------------------
-
-                if self.state == "GAME_OVER":
-
-                    if event.key == pygame.K_r:
-
-                        self.reset_game()
-
-                        self.state = "PLAYING"
-
-                    elif event.key == pygame.K_ESCAPE:
-
-                        self.running = False
-
-                    continue
-
-                # --------------------------------------
-                # PAUSE
-                # --------------------------------------
-
-                if event.key == pygame.K_p:
-
-                    if self.state == "PLAYING":
-
-                        self.state = "PAUSED"
-
-                        self.player.stop()
-
-                    elif self.state == "PAUSED":
-
-                        self.state = "PLAYING"
-
-                    continue
-
-                # --------------------------------------
-                # CHỈ XỬ LÝ GAMEPLAY KHI PLAYING
-                # --------------------------------------
-
-                if self.state != "PLAYING":
-                    continue
-
-                # LEFT
-                if (
-                    event.key == pygame.K_LEFT
-                    or event.key == pygame.K_a
-                ):
-
-                    self.player.move_left()
-
-                # RIGHT
-                elif (
-                    event.key == pygame.K_RIGHT
-                    or event.key == pygame.K_d
-                ):
-
-                    self.player.move_right()
-
-                # SHOOT
-                elif event.key == pygame.K_SPACE:
-
-                    shot = self.bullet_manager.shoot(
-                        self.player.rect.centerx,
-                        self.player.rect.top
-                    )
-
-                    # Chỉ phát sound nếu thực sự bắn
-                    if shot:
-                        self.sound_manager.play_shoot()
-
-                # ESC
-                elif event.key == pygame.K_ESCAPE:
-
-                    self.running = False
+                continue
 
             # ==========================================
-            # KEY UP
+            # ESC: thoát ở mọi trạng thái
             # ==========================================
 
-            if event.type == pygame.KEYUP:
+            if event.key == pygame.K_ESCAPE:
 
-                if event.key in (
-                    pygame.K_LEFT,
-                    pygame.K_RIGHT,
-                    pygame.K_a,
-                    pygame.K_d
-                ):
+                self.running = False
 
-                    self.player.stop()
+                continue
+
+            # ==========================================
+            # MENU: ENTER để chơi
+            # ==========================================
+
+            if self.state == STATE_MENU:
+
+                if event.key == pygame.K_RETURN:
+
+                    self.start_game()
+
+            # ==========================================
+            # GAME OVER: R để chơi lại
+            # ==========================================
+
+            elif self.state == STATE_GAME_OVER:
+
+                if event.key == pygame.K_r:
+
+                    self.start_game()
+
+            # ==========================================
+            # PLAYING / PAUSED: P để tạm dừng / tiếp tục
+            # ==========================================
+
+            elif event.key == pygame.K_p:
+
+                self.toggle_pause()
+
+    # ==================================================
+    # HANDLE PLAYER INPUT
+    # ==================================================
+
+    def handle_player_input(self):
+
+        keys = pygame.key.get_pressed()
+
+        left = (
+            keys[pygame.K_LEFT]
+            or keys[pygame.K_a]
+        )
+
+        right = (
+            keys[pygame.K_RIGHT]
+            or keys[pygame.K_d]
+        )
+
+        # Giữ cả 2 phím hoặc không giữ phím nào: đứng yên
+        if left and not right:
+
+            self.player.move_left()
+
+        elif right and not left:
+
+            self.player.move_right()
+
+        else:
+
+            self.player.stop()
+
+        # Giữ SPACE để bắn liên tục (BulletManager có cooldown)
+        if keys[pygame.K_SPACE]:
+
+            shot = self.bullet_manager.shoot(
+                self.player.rect.centerx,
+                self.player.rect.top
+            )
+
+            # Chỉ phát sound nếu thực sự bắn
+            if shot:
+
+                self.sound_manager.play_shoot()
 
     # ==================================================
     # HANDLE BULLET - ENEMY COLLISION
@@ -308,7 +348,9 @@ class Game:
 
                     if self.player.lives <= 0:
 
-                        self.state = "GAME_OVER"
+                        self.change_state(
+                            STATE_GAME_OVER
+                        )
 
                         return
 
@@ -328,10 +370,10 @@ class Game:
 
     def update_level(self):
 
-        # 100 điểm = tăng 1 level
+        # Mỗi LEVEL_SCORE_STEP điểm = tăng 1 level
 
         new_level = (
-            self.score // 100
+            self.score // LEVEL_SCORE_STEP
         ) + 1
 
         if new_level > self.level:
@@ -348,21 +390,25 @@ class Game:
 
     def check_game_over(self):
 
+        # Hết mạng
+        if self.player.lives <= 0:
+
+            self.change_state(
+                STATE_GAME_OVER
+            )
+
+            return
+
+        # Enemy xuống quá thấp
         for enemy in self.enemy_manager.enemies:
 
             if enemy.y > GAME_OVER_Y:
 
-                self.state = "GAME_OVER"
-
-                self.player.stop()
+                self.change_state(
+                    STATE_GAME_OVER
+                )
 
                 return
-
-        if self.player.lives <= 0:
-
-            self.state = "GAME_OVER"
-
-            self.player.stop()
 
     # ==================================================
     # UPDATE
@@ -370,8 +416,12 @@ class Game:
 
     def update(self):
 
-        if self.state != "PLAYING":
+        # MENU / PAUSED / GAME_OVER: đứng yên, không update logic
+        if self.state != STATE_PLAYING:
             return
+
+        # Input (giữ phím)
+        self.handle_player_input()
 
         # Player
         self.player.update()
@@ -397,12 +447,7 @@ class Game:
 
     def draw_pause(self):
 
-        font = pygame.font.Font(
-            None,
-            64
-        )
-
-        text = font.render(
+        text = self.pause_font.render(
             "PAUSED",
             True,
             WHITE
@@ -420,12 +465,7 @@ class Game:
             rect
         )
 
-        sub_font = pygame.font.Font(
-            None,
-            32
-        )
-
-        sub_text = sub_font.render(
+        sub_text = self.pause_sub_font.render(
             "Press P to continue",
             True,
             WHITE
@@ -493,7 +533,7 @@ class Game:
         # MENU
         # ==================================================
 
-        if self.state == "MENU":
+        if self.state == STATE_MENU:
 
             self.menu.draw(
                 self.screen
@@ -508,12 +548,12 @@ class Game:
             self.draw_game()
 
             # Pause
-            if self.state == "PAUSED":
+            if self.state == STATE_PAUSED:
 
                 self.draw_pause()
 
             # Game Over
-            elif self.state == "GAME_OVER":
+            elif self.state == STATE_GAME_OVER:
 
                 self.game_over_ui.draw(
                     self.screen,
