@@ -7,7 +7,6 @@ from config import (
     PLAYER_START_X,
     PLAYER_START_Y,
     PLAYER_INVINCIBLE_TIME,
-    SCREEN_WIDTH
 )
 
 
@@ -29,7 +28,7 @@ class Player:
         
 
     # Nhan sat thuong
-    def take_dame(self):
+    def take_damege(self):
         print(self.invincibleTime)
         if(self.invincibleTime != 0): return True
         if(self.defenseTime != 0):
@@ -48,7 +47,7 @@ class Player:
     # Nhan duoc Item
     def take_item(self, details):
         if(details == 'HP'):
-            if(self.HP == self.maxHP): pass
+            if(self.HP == 3): pass
             else:
                 self.HP += 1
         if(details == 'Defense'):
@@ -56,14 +55,14 @@ class Player:
 
     # Di chuyen
     # Di chuyen bang chuot
-    def move_by_mouse(self):
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        self.x = mouse_x - self.image.get_width()/2
-        self.y = mouse_y - self.image.get_height()/2
+    # def update(self):
+    #     mouse_x, mouse_y = pygame.mouse.get_pos()
+    #     self.x = mouse_x - self.image.get_width()/2
+    #     self.y = mouse_y - self.image.get_height()/2
 
 
     # Di chuyen bang ban phim
-    def move_by_keyboard(self):
+    def update(self):
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -72,13 +71,10 @@ class Player:
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.x += self.speed
 
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            self.y -= self.speed
-
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            self.y += self.speed
+        if self.x <= 0: self.x = 0
+        if self.x >= 736: self.x = 736
         
-    # In ra man hinh
+
     def draw(self, screen):
 
         self.checkInvincibleTime()
@@ -86,14 +82,8 @@ class Player:
 
         for i in range(self.HP):
             x = 20 + i*25
-            y = 20
+            y = 40
             screen.blit(HP_image, (x, y))
-
-        print(self.x, self. y)
-        if self.x <= 0: self.x = 0
-        if self.x >= 736: self.x = 736
-        if self.y <= 0: self.y = 0
-        if self.y >= 536: self.y = 536
 
         self.update_rect()
         screen.blit(self.image, (self.x, self.y))

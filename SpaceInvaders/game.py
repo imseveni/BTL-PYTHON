@@ -1,5 +1,6 @@
 import pygame
 
+
 from config import (
     SCREEN_WIDTH,
     SCREEN_HEIGHT,
@@ -12,7 +13,9 @@ from config import (
 )
 
 from entities.player import Player
-
+from entities.powerup import PowerUp
+import random
+from managers.power_up_manager import PowerUpManager
 from managers.enemy_manager import EnemyManager
 from managers.bullet_manager import BulletManager
 from managers.sound_manager import SoundManager
@@ -80,6 +83,7 @@ class Game:
 
         self.sound_manager = SoundManager()
 
+        self.power_up_manager = PowerUpManager()
         # ==================================================
         # UI
         # ==================================================
@@ -180,7 +184,7 @@ class Game:
 
                         self.state = "PAUSED"
 
-                        self.player.stop()
+                        # self.player.stop()
 
                     elif self.state == "PAUSED":
 
@@ -196,20 +200,20 @@ class Game:
                     continue
 
                 # LEFT
-                if (
-                    event.key == pygame.K_LEFT
-                    or event.key == pygame.K_a
-                ):
+                # if (
+                #     event.key == pygame.K_LEFT
+                #     or event.key == pygame.K_a
+                # ):
 
-                    self.player.move_left()
+                #     self.player.move_left()
 
-                # RIGHT
-                elif (
-                    event.key == pygame.K_RIGHT
-                    or event.key == pygame.K_d
-                ):
+                # # RIGHT
+                # elif (
+                #     event.key == pygame.K_RIGHT
+                #     or event.key == pygame.K_d
+                # ):
 
-                    self.player.move_right()
+                #     self.player.move_right()
 
                 # SHOOT
                 elif event.key == pygame.K_SPACE:
@@ -232,16 +236,16 @@ class Game:
             # KEY UP
             # ==========================================
 
-            if event.type == pygame.KEYUP:
+            # if event.type == pygame.KEYUP:
 
-                if event.key in (
-                    pygame.K_LEFT,
-                    pygame.K_RIGHT,
-                    pygame.K_a,
-                    pygame.K_d
-                ):
+            #     if event.key in (
+            #         pygame.K_LEFT,
+            #         pygame.K_RIGHT,
+            #         pygame.K_a,
+            #         pygame.K_d
+            #     ):
 
-                    self.player.stop()
+            #         self.player.stop()
 
     # ==================================================
     # HANDLE BULLET - ENEMY COLLISION
@@ -278,6 +282,14 @@ class Game:
                         self.enemy_manager.respawn(
                             enemy
                         )
+                    # Nhan Item
+                    n = random.randint(1, 10)
+                    if(n == 8):
+                        item = random.choice([
+                            PowerUp('assets/images/health.png', enemy.x, enemy.y, 'HP'),
+                            PowerUp('assets/images/shield.png', enemy.x, enemy.y, 'Defense')
+                        ])
+                        self.power_up_manager.powerups.append(item)
 
                     # Một bullet chỉ va chạm 1 enemy
                     break
@@ -313,6 +325,21 @@ class Game:
                         return
 
     # ==================================================
+    # PLAYER - POWERUP COLLISION
+    # ==================================================
+    def handle_player_power_up_collision(self):
+        for powerUp in self.power_up_manager.powerups:
+            if check_collision(
+                    powerUp,
+                    self.player
+                ):
+
+                self.player.take_item(powerUp.details)
+                self.power_up_manager.powerups.remove(powerUp)
+
+
+
+    # ==================================================
     # HANDLE COLLISION
     # ==================================================
 
@@ -321,6 +348,8 @@ class Game:
         self.handle_bullet_enemy_collision()
 
         self.handle_enemy_player_collision()
+
+        self.handle_player_power_up_collision()
 
     # ==================================================
     # UPDATE LEVEL
@@ -354,7 +383,7 @@ class Game:
 
                 self.state = "GAME_OVER"
 
-                self.player.stop()
+                # self.player.stop()
 
                 return
 
@@ -362,7 +391,7 @@ class Game:
 
             self.state = "GAME_OVER"
 
-            self.player.stop()
+            # self.player.stop()
 
     # ==================================================
     # UPDATE
@@ -384,6 +413,9 @@ class Game:
 
         # Collision
         self.handle_collisions()
+
+        # PowerUp 
+        self.power_up_manager.update()
 
         # Level
         self.update_level()
@@ -464,6 +496,9 @@ class Game:
             self.screen
         )
 
+        # PowerUP
+        self.power_up_manager.draw(self.screen)
+
         # HUD
         self.hud.draw(
             self.screen,
@@ -471,6 +506,7 @@ class Game:
             self.player.lives,
             self.level
         )
+
 
     # ==================================================
     # DRAW
@@ -537,6 +573,8 @@ class Game:
         self.enemy_manager.reset()
 
         self.bullet_manager.reset()
+
+        self.power_up_manager.reset()
 
     # ==================================================
     # GAME LOOP

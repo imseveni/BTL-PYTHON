@@ -7,7 +7,7 @@ class PowerUp:
         self.image = pygame.image.load(image_path)
         self.x = x
         self.y = y
-        self.speed = 0.2
+        self.speed = 0.5
         self.details = details
         self.rect = self.image.get_rect()
         self.update_rect()
@@ -16,7 +16,7 @@ class PowerUp:
         self.update_rect()
         screen.blit(self.image, (self.x, self.y))
 
-    def move(self):
+    def update(self):
         self.y += self.speed
 
     def update_rect(self):
