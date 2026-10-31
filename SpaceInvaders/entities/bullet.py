@@ -1,23 +1,92 @@
+import pygame
+
+from config import SCREEN_HEIGHT
+
+
 class Bullet:
     def __init__(
         self,
         image,
         x,
         y,
-        speed
+        speed,
+        direction=-1,
+        damage=1,
+        color=None
     ):
 
-        self.image = image
+        # ==================================================
+        # BULLET DATA
+        # ==================================================
+
+        # -1: bay lên
+        #  1: bay xuống
+        self.direction = direction
 
         self.speed = speed
 
+        self.damage = damage
+
+        # ==================================================
+        # IMAGE
+        # ==================================================
+
+        if image is not None:
+
+            self.image = image
+
+        else:
+
+            # Nếu không có image thì tạo bullet đơn giản
+            self.image = pygame.Surface(
+                (4, 12)
+            )
+
+            if color is not None:
+
+                self.image.fill(
+                    color
+                )
+
+            else:
+
+                # Player bullet
+                if self.direction == -1:
+
+                    self.image.fill(
+                        (255, 230, 0)
+                    )
+
+                # Enemy bullet
+                else:
+
+                    self.image.fill(
+                        (255, 80, 50)
+                    )
+
+        # ==================================================
+        # RECT
+        # ==================================================
+
         self.rect = self.image.get_rect()
 
-        # Đạn xuất hiện ở giữa player
-        self.rect.midbottom = (
-            int(x),
-            int(y)
-        )
+        # Player bullet bay lên:
+        # xuất hiện tại giữa phía trên Player
+        if self.direction == -1:
+
+            self.rect.midbottom = (
+                int(x),
+                int(y)
+            )
+
+        # Enemy bullet bay xuống:
+        # xuất hiện tại giữa phía dưới Enemy
+        else:
+
+            self.rect.midtop = (
+                int(x),
+                int(y)
+            )
 
     # ==================================================
     # UPDATE
@@ -25,7 +94,10 @@ class Bullet:
 
     def update(self):
 
-        self.rect.y -= self.speed
+        self.rect.y += (
+            self.speed
+            * self.direction
+        )
 
     # ==================================================
     # DRAW
@@ -42,6 +114,12 @@ class Bullet:
     # CHECK OUTSIDE
     # ==================================================
 
-    def is_outside(self):
+    def is_outside(
+        self,
+        screen_height=SCREEN_HEIGHT
+    ):
 
-        return self.rect.bottom < 0
+        return (
+            self.rect.bottom < 0
+            or self.rect.top > screen_height
+        )
