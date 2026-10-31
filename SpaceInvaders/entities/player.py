@@ -13,7 +13,7 @@ from config import (
 
 HP_image = pygame.image.load('assets/images/heart_full.png')
 HP_image = pygame.transform.scale(HP_image, (20, 20))
-defensePlayer = 'assets/images/defense.png'
+defensePlayer = 'assets/images/player_defense.png'
 
 class Player:
     def __init__(self):
