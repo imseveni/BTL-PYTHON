@@ -17,10 +17,13 @@ defensePlayer = 'assets/images/player_defense.png'
 class Player:
     def __init__(self):
         self.image = pygame.image.load(PLAYER_IMAGE)
+        self.defense_image = pygame.image.load(defensePlayer)
+        self.defense_image = pygame.transform.scale(self.defense_image, (100, 100))
+        self.base_image = self.image
         self.x = PLAYER_START_X
         self.y = PLAYER_START_Y
         self.speed = PLAYER_SPEED
-        self.HP = PLAYER_LIVES
+        self.lives = PLAYER_LIVES
         self.invincibleTime = PLAYER_INVINCIBLE_TIME
         self.defenseTime = 0
         self.rect = self.image.get_rect()
@@ -28,38 +31,26 @@ class Player:
         
 
     # Nhan sat thuong
-    def take_damege(self):
+    def take_damage(self):
         print(self.invincibleTime)
-        if(self.invincibleTime != 0): return True
+        if(self.invincibleTime != 0): return False
         if(self.defenseTime != 0):
             self.defenseTime = 0
-            return True
+            return False
         else:
-            self.HP -= 1
+            self.lives -= 1
             self.reset_position()
-
-            pygame.mouse.set_pos(
-                self.x + self.image.get_width()//2, self.y + self.image.get_height()//2
-            )    
-        return self.HP > 0
+        return True
         
 
     # Nhan duoc Item
     def take_item(self, details):
         if(details == 'HP'):
-            if(self.HP == 3): pass
+            if(self.lives == PLAYER_LIVES): pass
             else:
-                self.HP += 1
+                self.lives += 1
         if(details == 'Defense'):
             self.defenseTime = 1000
-
-    # Di chuyen
-    # Di chuyen bang chuot
-    # def update(self):
-    #     mouse_x, mouse_y = pygame.mouse.get_pos()
-    #     self.x = mouse_x - self.image.get_width()/2
-    #     self.y = mouse_y - self.image.get_height()/2
-
 
     # Di chuyen bang ban phim
     def update(self):
@@ -80,7 +71,7 @@ class Player:
         self.checkInvincibleTime()
         self.checkdefense()
 
-        for i in range(self.HP):
+        for i in range(self.lives):
             x = 20 + i*25
             y = 40
             screen.blit(HP_image, (x, y))
@@ -114,9 +105,8 @@ class Player:
     #Kiem tra khien
     def checkdefense(self):
         if(self.defenseTime == 0): 
-            self.image = pygame.image.load(PLAYER_IMAGE)
+            self.image = self.base_image
             pass
         else:
-            self.image = pygame.image.load(defensePlayer) 
-            self.image = pygame.transform.scale(self.image, (100, 100))
+            self.image = self.defense_image
             self.defenseTime -= 1
