@@ -7,22 +7,15 @@ from config import (
     BACKGROUND_IMAGE,
     ICON_IMAGE,
     GAME_OVER_Y,
-<<<<<<< HEAD
-    LEVEL_SCORE_STEP,
-=======
     HIGH_SCORE_FILE,
     LEVEL_SCORE_STEP,
 
->>>>>>> 4159d45 (Upload)
     STATE_MENU,
     STATE_PLAYING,
     STATE_PAUSED,
     STATE_GAME_OVER,
-<<<<<<< HEAD
-=======
     STATE_HIGH_SCORE,
 
->>>>>>> 4159d45 (Upload)
     BLACK,
 )
 
@@ -158,16 +151,9 @@ class Game:
 
         self.state = new_state
 
-<<<<<<< HEAD
-        # Dừng player khi rời khỏi trạng thái chơi,
-        # tránh việc tàu tiếp tục trượt sau khi resume
-        if new_state != STATE_PLAYING:
-
-=======
         # Khi rời khỏi PLAYING
         # thì dừng chuyển động của Player
         if new_state != STATE_PLAYING:
->>>>>>> 4159d45 (Upload)
             self.player.stop()
 
     # ==================================================
@@ -183,8 +169,6 @@ class Game:
         )
 
     # ==================================================
-<<<<<<< HEAD
-=======
     # END GAME
     # ==================================================
 
@@ -198,7 +182,6 @@ class Game:
         )
 
     # ==================================================
->>>>>>> 4159d45 (Upload)
     # TOGGLE PAUSE
     # ==================================================
 
@@ -238,93 +221,6 @@ class Game:
 
                 continue
 
-<<<<<<< HEAD
-            if event.type != pygame.KEYDOWN:
-
-                continue
-
-            # ==========================================
-            # ESC: thoát ở mọi trạng thái
-            # ==========================================
-
-            if event.key == pygame.K_ESCAPE:
-
-                self.running = False
-
-                continue
-
-            # ==========================================
-            # MENU: ENTER để chơi
-            # ==========================================
-
-            if self.state == STATE_MENU:
-
-                if event.key == pygame.K_RETURN:
-
-                    self.start_game()
-
-            # ==========================================
-            # GAME OVER: R để chơi lại
-            # ==========================================
-
-            elif self.state == STATE_GAME_OVER:
-
-                if event.key == pygame.K_r:
-
-                    self.start_game()
-
-            # ==========================================
-            # PLAYING / PAUSED: P để tạm dừng / tiếp tục
-            # ==========================================
-
-            elif event.key == pygame.K_p:
-
-                self.toggle_pause()
-
-    # ==================================================
-    # HANDLE PLAYER INPUT
-    # ==================================================
-
-    def handle_player_input(self):
-
-        keys = pygame.key.get_pressed()
-
-        left = (
-            keys[pygame.K_LEFT]
-            or keys[pygame.K_a]
-        )
-
-        right = (
-            keys[pygame.K_RIGHT]
-            or keys[pygame.K_d]
-        )
-
-        # Giữ cả 2 phím hoặc không giữ phím nào: đứng yên
-        if left and not right:
-
-            self.player.move_left()
-
-        elif right and not left:
-
-            self.player.move_right()
-
-        else:
-
-            self.player.stop()
-
-        # Giữ SPACE để bắn liên tục (BulletManager có cooldown)
-        if keys[pygame.K_SPACE]:
-
-            shot = self.bullet_manager.shoot(
-                self.player.rect.centerx,
-                self.player.rect.top
-            )
-
-            # Chỉ phát sound nếu thực sự bắn
-            if shot:
-
-                self.sound_manager.play_shoot()
-=======
             # ==================================================
             # MENU
             # ==================================================
@@ -541,7 +437,6 @@ class Game:
                     elif event.key == pygame.K_ESCAPE:
 
                         self.running = False
->>>>>>> 4159d45 (Upload)
 
     # ==================================================
     # HANDLE PLAYER INPUT
@@ -681,13 +576,7 @@ class Game:
                     # Hết mạng
                     if self.player.lives <= 0:
 
-<<<<<<< HEAD
-                        self.change_state(
-                            STATE_GAME_OVER
-                        )
-=======
                         self.end_game()
->>>>>>> 4159d45 (Upload)
 
                         return
 
@@ -711,14 +600,10 @@ class Game:
 
     def update_level(self):
 
-<<<<<<< HEAD
-        # Mỗi LEVEL_SCORE_STEP điểm = tăng 1 level
-=======
         # Ví dụ:
         # 0 - 99     -> Level 1
         # 100 - 199  -> Level 2
         # 200 - 299  -> Level 3
->>>>>>> 4159d45 (Upload)
 
         new_level = (
             self.score // LEVEL_SCORE_STEP
@@ -738,18 +623,6 @@ class Game:
 
     def check_game_over(self):
 
-<<<<<<< HEAD
-        # Hết mạng
-        if self.player.lives <= 0:
-
-            self.change_state(
-                STATE_GAME_OVER
-            )
-
-            return
-
-        # Enemy xuống quá thấp
-=======
         # ==================================================
         # PLAYER HẾT MẠNG
         # ==================================================
@@ -764,18 +637,11 @@ class Game:
         # ENEMY XUỐNG QUÁ THẤP
         # ==================================================
 
->>>>>>> 4159d45 (Upload)
         for enemy in self.enemy_manager.enemies:
 
             if enemy.y > GAME_OVER_Y:
 
-<<<<<<< HEAD
-                self.change_state(
-                    STATE_GAME_OVER
-                )
-=======
                 self.end_game()
->>>>>>> 4159d45 (Upload)
 
                 return
 
@@ -785,16 +651,6 @@ class Game:
 
     def update(self):
 
-<<<<<<< HEAD
-        # MENU / PAUSED / GAME_OVER: đứng yên, không update logic
-        if self.state != STATE_PLAYING:
-            return
-
-        # Input (giữ phím)
-        self.handle_player_input()
-
-        # Player
-=======
         # Menu / Pause / Game Over / High Score
         # thì gameplay không update
 
@@ -811,7 +667,6 @@ class Game:
         # PLAYER
         # ==================================================
 
->>>>>>> 4159d45 (Upload)
         self.player.update()
 
         # ==================================================
@@ -849,51 +704,6 @@ class Game:
         self.check_game_over()
 
     # ==================================================
-<<<<<<< HEAD
-    # DRAW PAUSE
-    # ==================================================
-
-    def draw_pause(self):
-
-        text = self.pause_font.render(
-            "PAUSED",
-            True,
-            WHITE
-        )
-
-        rect = text.get_rect(
-            center=(
-                SCREEN_WIDTH // 2,
-                SCREEN_HEIGHT // 2
-            )
-        )
-
-        self.screen.blit(
-            text,
-            rect
-        )
-
-        sub_text = self.pause_sub_font.render(
-            "Press P to continue",
-            True,
-            WHITE
-        )
-
-        sub_rect = sub_text.get_rect(
-            center=(
-                SCREEN_WIDTH // 2,
-                SCREEN_HEIGHT // 2 + 60
-            )
-        )
-
-        self.screen.blit(
-            sub_text,
-            sub_rect
-        )
-
-    # ==================================================
-=======
->>>>>>> 4159d45 (Upload)
     # DRAW GAME
     # ==================================================
 
@@ -975,20 +785,12 @@ class Game:
             # Player + Enemy + Bullet + HUD
             self.draw_game()
 
-<<<<<<< HEAD
-            # Pause
-            if self.state == STATE_PAUSED:
-=======
             # ==============================================
             # PAUSED
             # ==============================================
->>>>>>> 4159d45 (Upload)
 
             if self.state == STATE_PAUSED:
 
-<<<<<<< HEAD
-            # Game Over
-=======
                 self.pause_ui.draw(
                     self.screen
                 )
@@ -997,7 +799,6 @@ class Game:
             # GAME OVER
             # ==============================================
 
->>>>>>> 4159d45 (Upload)
             elif self.state == STATE_GAME_OVER:
 
                 self.game_over_ui.draw(
@@ -1126,13 +927,8 @@ class Game:
 
             self.update()
 
-<<<<<<< HEAD
-            # 3. Render
-            self.draw()
-=======
             # ==================================================
             # 3. DRAW
             # ==================================================
 
             self.draw()
->>>>>>> 4159d45 (Upload)
