@@ -11,160 +11,122 @@ from config import (
 )
 
 
+HP_image = pygame.image.load('assets/images/heart_full.png')
+HP_image = pygame.transform.scale(HP_image, (20, 20))
+defensePlayer = 'assets/images/defense.png'
+
 class Player:
     def __init__(self):
-
-        # =========================
-        # IMAGE
-        # =========================
-
-        self.image = pygame.image.load(
-            str(PLAYER_IMAGE)
-        ).convert_alpha()
-
-        # =========================
-        # POSITION
-        # =========================
-
+        self.image = pygame.image.load(PLAYER_IMAGE)
         self.x = PLAYER_START_X
         self.y = PLAYER_START_Y
-
-        # =========================
-        # MOVEMENT
-        # =========================
-
         self.speed = PLAYER_SPEED
-
-        self.x_change = 0
-
-        # =========================
-        # LIFE
-        # =========================
-
-        self.lives = PLAYER_LIVES
-
-        # Thời điểm hết bất tử
-        self.invincible_until = 0
-
-        # =========================
-        # RECT
-        # =========================
-
+        self.HP = PLAYER_LIVES
+        self.invincibleTime = PLAYER_INVINCIBLE_TIME
+        self.defenseTime = 0
         self.rect = self.image.get_rect()
-
         self.update_rect()
+        
 
-    # ==================================================
-    # MOVE LEFT
-    # ==================================================
+    # Nhan sat thuong
+    def take_dame(self):
+        print(self.invincibleTime)
+        if(self.invincibleTime != 0): return True
+        if(self.defenseTime != 0):
+            self.defenseTime = 0
+            return True
+        else:
+            self.HP -= 1
+            self.reset_position()
 
-    def move_left(self):
-        self.x_change = -self.speed
+            pygame.mouse.set_pos(
+                self.x + self.image.get_width()//2, self.y + self.image.get_height()//2
+            )    
+        return self.HP > 0
+        
 
-    # ==================================================
-    # MOVE RIGHT
-    # ==================================================
+    # Nhan duoc Item
+    def take_item(self, details):
+        if(details == 'HP'):
+            if(self.HP == self.maxHP): pass
+            else:
+                self.HP += 1
+        if(details == 'Defense'):
+            self.defenseTime = 1000
 
-    def move_right(self):
-        self.x_change = self.speed
+    # Di chuyen
+    # Di chuyen bang chuot
+    def move_by_mouse(self):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        self.x = mouse_x - self.image.get_width()/2
+        self.y = mouse_y - self.image.get_height()/2
 
-    # ==================================================
-    # STOP
-    # ==================================================
 
-    def stop(self):
-        self.x_change = 0
+    # Di chuyen bang ban phim
+    def move_by_keyboard(self):
+        keys = pygame.key.get_pressed()
 
-    # ==================================================
-    # UPDATE RECT
-    # ==================================================
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            self.x -= self.speed
 
-    def update_rect(self):
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            self.x += self.speed
 
-        self.rect.topleft = (
-            int(self.x),
-            int(self.y)
-        )
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            self.y -= self.speed
 
-    # ==================================================
-    # UPDATE
-    # ==================================================
-
-    def update(self):
-
-        self.x += self.x_change
-
-        # Không cho đi ra trái
-        if self.x < 0:
-            self.x = 0
-
-        # Không cho đi ra phải
-        max_x = SCREEN_WIDTH - self.image.get_width()
-
-        if self.x > max_x:
-            self.x = max_x
-
-        self.update_rect()
-
-    # ==================================================
-    # DRAW
-    # ==================================================
-
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            self.y += self.speed
+        
+    # In ra man hinh
     def draw(self, screen):
 
-        screen.blit(
-            self.image,
-            (
-                int(self.x),
-                int(self.y)
-            )
-        )
+        self.checkInvincibleTime()
+        self.checkdefense()
 
-    # ==================================================
-    # TAKE DAMAGE
-    # ==================================================
+        for i in range(self.HP):
+            x = 20 + i*25
+            y = 20
+            screen.blit(HP_image, (x, y))
 
-    def take_damage(self):
+        print(self.x, self. y)
+        if self.x <= 0: self.x = 0
+        if self.x >= 736: self.x = 736
+        if self.y <= 0: self.y = 0
+        if self.y >= 536: self.y = 536
 
-        current_time = pygame.time.get_ticks()
+        self.update_rect()
+        screen.blit(self.image, (self.x, self.y))
 
-        # Nếu đang bất tử
-        if current_time < self.invincible_until:
-            return False
+    # Cap nhat khoi
+    def update_rect(self):
+        self.rect.topleft = (self.x, self.y)
 
-        self.lives -= 1
 
-        # Bất tử tạm thời
-        self.invincible_until = (
-            current_time
-            + PLAYER_INVINCIBLE_TIME
-        )
-
-        self.reset_position()
-
-        return True
-
-    # ==================================================
-    # RESET POSITION
-    # ==================================================
-
+    # Cap nhat ve vi tri ban dau
     def reset_position(self):
 
         self.x = PLAYER_START_X
         self.y = PLAYER_START_Y
+        self.invincibleTime = PLAYER_INVINCIBLE_TIME
 
-        self.x_change = 0
-
-        self.update_rect()
-
-    # ==================================================
-    # RESET PLAYER
-    # ==================================================
-
+    # reset player
     def reset(self):
 
         self.lives = PLAYER_LIVES
-
-        self.invincible_until = 0
-
         self.reset_position()
+
+    #Kiem tra bat tu
+    def checkInvincibleTime(self):
+        if(self.invincibleTime == 0): pass
+        else: self.invincibleTime -= 1
+
+    #Kiem tra khien
+    def checkdefense(self):
+        if(self.defenseTime == 0): 
+            self.image = pygame.image.load(PLAYER_IMAGE)
+            pass
+        else:
+            self.image = pygame.image.load(defensePlayer) 
+            self.image = pygame.transform.scale(self.image, (100, 100))
+            self.defenseTime -= 1

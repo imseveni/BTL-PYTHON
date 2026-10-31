@@ -1,33 +1,23 @@
+import pygame
+from pygame.locals import *
+
+
 class PowerUp:
-    def __init__(
-        self,
-        image,
-        x,
-        y,
-        power_type
-    ):
-
-        self.image = image
-
-        self.power_type = power_type
-
-        self.speed = 3
-
-        self.rect = self.image.get_rect(
-            center=(x, y)
-        )
-
-    def update(self):
-
-        self.rect.y += self.speed
+    def __init__(self, image_path, x, y, details):
+        self.image = pygame.image.load(image_path)
+        self.x = x
+        self.y = y
+        self.speed = 0.2
+        self.details = details
+        self.rect = self.image.get_rect()
+        self.update_rect()
 
     def draw(self, screen):
+        self.update_rect()
+        screen.blit(self.image, (self.x, self.y))
 
-        screen.blit(
-            self.image,
-            self.rect
-        )
+    def move(self):
+        self.y += self.speed
 
-    def is_outside(self, screen_height):
-
-        return self.rect.top > screen_height
+    def update_rect(self):
+        self.rect.center = (self.x, self.y)
