@@ -13,10 +13,6 @@ from config import (
 )
 
 
-HP_image = pygame.image.load('assets/images/heart_full.png')
-HP_image = pygame.transform.scale(HP_image, (20, 20))
-defensePlayer = 'assets/images/player_defense.png'
-
 class Player:
     def __init__(self):
 
@@ -80,6 +76,7 @@ class Player:
         # ==================================================
 
         self.rect = self.image.get_rect()
+
         self.update_rect()
 
     # ==================================================
@@ -265,9 +262,15 @@ class Player:
 
         self.x = PLAYER_START_X
         self.y = PLAYER_START_Y
-        self.invincibleTime = PLAYER_INVINCIBLE_TIME
 
-    # reset player
+        self.x_change = 0
+
+        self.update_rect()
+
+    # ==================================================
+    # RESET PLAYER
+    # ==================================================
+
     def reset(self):
 
         self.lives = PLAYER_LIVES
@@ -279,17 +282,3 @@ class Player:
         self.image = self.base_image
 
         self.reset_position()
-
-    #Kiem tra bat tu
-    def checkInvincibleTime(self):
-        if(self.invincibleTime == 0): pass
-        else: self.invincibleTime -= 1
-
-    #Kiem tra khien
-    def checkdefense(self):
-        if(self.defenseTime == 0): 
-            self.image = self.base_image
-            pass
-        else:
-            self.image = self.defense_image
-            self.defenseTime -= 1

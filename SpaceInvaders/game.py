@@ -2,7 +2,6 @@ import random
 
 import pygame
 
-
 from config import (
     SCREEN_WIDTH,
     SCREEN_HEIGHT,
@@ -114,7 +113,6 @@ class Game:
 
         self.sound_manager = SoundManager()
 
-        self.power_up_manager = PowerUpManager()
         # ==================================================
         # UI
         # ==================================================
@@ -589,14 +587,6 @@ class Game:
                         self.enemy_manager.respawn(
                             enemy
                         )
-                    # Nhan Item
-                    n = random.randint(1, 10)
-                    if(n == 8):
-                        item = random.choice([
-                            PowerUp('assets/images/health.png', enemy.x, enemy.y, 'HP'),
-                            PowerUp('assets/images/shield.png', enemy.x, enemy.y, 'Defense')
-                        ])
-                        self.power_up_manager.powerups.append(item)
 
                     # Một bullet chỉ hit một enemy
                     break
@@ -905,7 +895,6 @@ class Game:
             self.player.lives,
             self.level
         )
-
 
     # ==================================================
     # DRAW

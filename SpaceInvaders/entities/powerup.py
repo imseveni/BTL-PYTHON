@@ -1,7 +1,3 @@
-import pygame
-from pygame.locals import *
-
-
 class PowerUp:
     def __init__(
         self,
@@ -35,11 +31,11 @@ class PowerUp:
     # ==================================================
 
     def draw(self, screen):
-        self.update_rect()
-        screen.blit(self.image, (self.x, self.y))
 
-    def update(self):
-        self.y += self.speed
+        screen.blit(
+            self.image,
+            self.rect
+        )
 
     # ==================================================
     # CHECK OUTSIDE
