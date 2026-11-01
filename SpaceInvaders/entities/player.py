@@ -2,11 +2,14 @@ import pygame
 
 from config import (
     PLAYER_IMAGE,
+    PLAYER_DEFENSE_IMAGE,
     PLAYER_SPEED,
     PLAYER_LIVES,
     PLAYER_START_X,
     PLAYER_START_Y,
     PLAYER_INVINCIBLE_TIME,
+    PLAYER_DEFENSE_TIME,
+    SCREEN_WIDTH,
 )
 
 
@@ -16,75 +19,248 @@ defensePlayer = 'assets/images/player_defense.png'
 
 class Player:
     def __init__(self):
-        self.image = pygame.image.load(PLAYER_IMAGE)
-        self.defense_image = pygame.image.load(defensePlayer)
-        self.defense_image = pygame.transform.scale(self.defense_image, (100, 100))
-        self.base_image = self.image
+
+        # ==================================================
+        # IMAGE
+        # ==================================================
+
+        self.base_image = pygame.image.load(
+            str(PLAYER_IMAGE)
+        ).convert_alpha()
+
+        self.defense_image = pygame.image.load(
+            str(PLAYER_DEFENSE_IMAGE)
+        ).convert_alpha()
+
+        # Giữ cùng kích thước Player
+        self.defense_image = pygame.transform.scale(
+            self.defense_image,
+            self.base_image.get_size()
+        )
+
+        self.image = self.base_image
+
+        # ==================================================
+        # POSITION
+        # ==================================================
+
         self.x = PLAYER_START_X
         self.y = PLAYER_START_Y
+
+        # ==================================================
+        # MOVEMENT
+        # ==================================================
+
         self.speed = PLAYER_SPEED
+
+        self.x_change = 0
+
+        # ==================================================
+        # LIFE
+        # ==================================================
+
         self.lives = PLAYER_LIVES
-        self.invincibleTime = PLAYER_INVINCIBLE_TIME
-        self.defenseTime = 0
+
+        # ==================================================
+        # INVINCIBLE
+        # ==================================================
+
+        # Thời điểm hết bất tử
+        self.invincible_until = 0
+
+        # ==================================================
+        # DEFENSE
+        # ==================================================
+
+        # Thời điểm khiên hết tác dụng
+        self.defense_until = 0
+
+        # ==================================================
+        # RECT
+        # ==================================================
+
         self.rect = self.image.get_rect()
         self.update_rect()
-        
 
-    # Nhan sat thuong
-    def take_damage(self):
-        print(self.invincibleTime)
-        if(self.invincibleTime != 0): return False
-        if(self.defenseTime != 0):
-            self.defenseTime = 0
-            return False
+    # ==================================================
+    # MOVE LEFT
+    # ==================================================
+
+    def move_left(self):
+
+        self.x_change = -self.speed
+
+    # ==================================================
+    # MOVE RIGHT
+    # ==================================================
+
+    def move_right(self):
+
+        self.x_change = self.speed
+
+    # ==================================================
+    # STOP
+    # ==================================================
+
+    def stop(self):
+
+        self.x_change = 0
+
+    # ==================================================
+    # UPDATE RECT
+    # ==================================================
+
+    def update_rect(self):
+
+        self.rect.topleft = (
+            int(self.x),
+            int(self.y)
+        )
+
+    # ==================================================
+    # UPDATE EFFECT
+    # ==================================================
+
+    def update_effects(self):
+
+        current_time = pygame.time.get_ticks()
+
+        # Nếu Defense còn thời gian
+        if current_time < self.defense_until:
+
+            self.image = self.defense_image
+
         else:
-            self.lives -= 1
-            self.reset_position()
-        return True
-        
 
-    # Nhan duoc Item
-    def take_item(self, details):
-        if(details == 'HP'):
-            if(self.lives == PLAYER_LIVES): pass
-            else:
-                self.lives += 1
-        if(details == 'Defense'):
-            self.defenseTime = 1000
+            self.image = self.base_image
 
-    # Di chuyen bang ban phim
+    # ==================================================
+    # UPDATE
+    # ==================================================
+
     def update(self):
-        keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.x -= self.speed
+        # Di chuyển
+        self.x += self.x_change
 
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.x += self.speed
+        # Không cho đi khỏi cạnh trái
+        if self.x < 0:
 
-        if self.x <= 0: self.x = 0
-        if self.x >= 736: self.x = 736
-        
+            self.x = 0
+
+        # Không cho đi khỏi cạnh phải
+        max_x = (
+            SCREEN_WIDTH
+            - self.image.get_width()
+        )
+
+        if self.x > max_x:
+
+            self.x = max_x
+
+        # Effect
+        self.update_effects()
+
+        # Rect
+        self.update_rect()
+
+    # ==================================================
+    # DRAW
+    # ==================================================
 
     def draw(self, screen):
 
-        self.checkInvincibleTime()
-        self.checkdefense()
+        screen.blit(
+            self.image,
+            (
+                int(self.x),
+                int(self.y)
+            )
+        )
 
-        for i in range(self.lives):
-            x = 20 + i*25
-            y = 40
-            screen.blit(HP_image, (x, y))
+    # ==================================================
+    # TAKE DAMAGE
+    # ==================================================
 
-        self.update_rect()
-        screen.blit(self.image, (self.x, self.y))
+    def take_damage(self):
 
-    # Cap nhat khoi
-    def update_rect(self):
-        self.rect.topleft = (self.x, self.y)
+        current_time = pygame.time.get_ticks()
 
+        # ==================================================
+        # ĐANG BẤT TỬ
+        # ==================================================
 
-    # Cap nhat ve vi tri ban dau
+        if current_time < self.invincible_until:
+
+            return False
+
+        # ==================================================
+        # CÓ KHIÊN
+        # ==================================================
+
+        if current_time < self.defense_until:
+
+            # Khiên chặn 1 lần va chạm
+            self.defense_until = 0
+
+            self.image = self.base_image
+
+            # Trả True để Game biết va chạm đã được xử lý
+            # và có thể respawn enemy
+            return True
+
+        # ==================================================
+        # MẤT MÁU
+        # ==================================================
+
+        self.lives -= 1
+
+        # Bất tử tạm thời
+        self.invincible_until = (
+            current_time
+            + PLAYER_INVINCIBLE_TIME
+        )
+
+        self.reset_position()
+
+        return True
+
+    # ==================================================
+    # TAKE ITEM
+    # ==================================================
+
+    def take_item(self, power_type):
+
+        current_time = pygame.time.get_ticks()
+
+        # ==================================================
+        # HP
+        # ==================================================
+
+        if power_type == "HP":
+
+            # Không vượt quá số mạng tối đa
+            if self.lives < PLAYER_LIVES:
+
+                self.lives += 1
+
+        # ==================================================
+        # DEFENSE
+        # ==================================================
+
+        elif power_type == "DEFENSE":
+
+            self.defense_until = (
+                current_time
+                + PLAYER_DEFENSE_TIME
+            )
+
+            self.image = self.defense_image
+
+    # ==================================================
+    # RESET POSITION
+    # ==================================================
+
     def reset_position(self):
 
         self.x = PLAYER_START_X
@@ -95,6 +271,13 @@ class Player:
     def reset(self):
 
         self.lives = PLAYER_LIVES
+
+        self.invincible_until = 0
+
+        self.defense_until = 0
+
+        self.image = self.base_image
+
         self.reset_position()
 
     #Kiem tra bat tu

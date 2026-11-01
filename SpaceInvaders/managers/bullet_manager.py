@@ -7,6 +7,7 @@ from config import (
     BULLET_IMAGE,
     BULLET_SPEED,
     SHOOT_COOLDOWN,
+    ENEMY_BULLET_SPEED,
     SCREEN_HEIGHT
 )
 
@@ -131,9 +132,9 @@ class BulletManager:
             image=self.enemy_bullet_image,
             x=x,
             y=y,
-            speed=speed,
+            speed=ENEMY_BULLET_SPEED,
             direction=1,
-            damage=damage,
+            damage=1,
             color=(255, 60, 60)
         )
 

@@ -3,14 +3,36 @@ from pygame.locals import *
 
 
 class PowerUp:
-    def __init__(self, image_path, x, y, details):
-        self.image = pygame.image.load(image_path)
-        self.x = x
-        self.y = y
-        self.speed = 0.5
-        self.details = details
-        self.rect = self.image.get_rect()
-        self.update_rect()
+    def __init__(
+        self,
+        image,
+        x,
+        y,
+        power_type,
+        speed=3
+    ):
+
+        self.image = image
+
+        self.power_type = power_type
+
+        self.speed = speed
+
+        self.rect = self.image.get_rect(
+            center=(x, y)
+        )
+
+    # ==================================================
+    # UPDATE
+    # ==================================================
+
+    def update(self):
+
+        self.rect.y += self.speed
+
+    # ==================================================
+    # DRAW
+    # ==================================================
 
     def draw(self, screen):
         self.update_rect()
@@ -19,5 +41,10 @@ class PowerUp:
     def update(self):
         self.y += self.speed
 
-    def update_rect(self):
-        self.rect.center = (self.x, self.y)
+    # ==================================================
+    # CHECK OUTSIDE
+    # ==================================================
+
+    def is_outside(self, screen_height):
+
+        return self.rect.top > screen_height

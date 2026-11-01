@@ -1,4 +1,17 @@
-from config import SCREEN_WIDTH
+import pygame
+
+from config import (
+    SCREEN_WIDTH,
+
+    NORMAL_ENEMY_SCORE,
+    FAST_ENEMY_SCORE,
+    TANK_ENEMY_SCORE,
+
+    FAST_ENEMY_SPEED_MULTIPLIER,
+    TANK_ENEMY_SPEED_MULTIPLIER,
+
+    TANK_ENEMY_HEALTH,
+)
 
 
 class Enemy:
@@ -10,25 +23,63 @@ class Enemy:
         speed,
         drop_distance,
         health=1,
-        score=10
+        score=NORMAL_ENEMY_SCORE,
+        enemy_type="normal",
+        speed_multiplier=1.0,
     ):
+
+        # ==================================================
+        # IMAGE
+        # ==================================================
 
         self.image = image
 
-        self.x = x
-        self.y = y
+        # ==================================================
+        # POSITION
+        # ==================================================
 
-        self.speed = speed
+        self.x = float(x)
+        self.y = float(y)
 
-        self.x_change = speed
+        # ==================================================
+        # TYPE
+        # ==================================================
+
+        self.enemy_type = enemy_type
+
+        # ==================================================
+        # SPEED
+        # ==================================================
+
+        self.speed_multiplier = speed_multiplier
+
+        self.base_speed = speed
+
+        self.speed = (
+            self.base_speed
+            * self.speed_multiplier
+        )
+
+        self.x_change = self.speed
 
         self.drop_distance = drop_distance
 
-        self.health = health
+        # ==================================================
+        # HEALTH
+        # ==================================================
 
+        self.health = health
         self.max_health = health
 
+        # ==================================================
+        # SCORE
+        # ==================================================
+
         self.score = score
+
+        # ==================================================
+        # RECT
+        # ==================================================
 
         self.rect = self.image.get_rect()
 
@@ -53,9 +104,12 @@ class Enemy:
 
         self.x += self.x_change
 
-        max_x = SCREEN_WIDTH - self.image.get_width()
+        max_x = (
+            SCREEN_WIDTH
+            - self.image.get_width()
+        )
 
-        # Chạm bên trái
+        # Chạm biên trái
         if self.x <= 0:
 
             self.x = 0
@@ -66,7 +120,7 @@ class Enemy:
 
             self.y += self.drop_distance
 
-        # Chạm bên phải
+        # Chạm biên phải
         elif self.x >= max_x:
 
             self.x = max_x
@@ -93,11 +147,72 @@ class Enemy:
             )
         )
 
+        # Chỉ Tank hoặc enemy nhiều HP mới hiện thanh máu
+        if self.max_health > 1:
+
+            self.draw_health_bar(
+                screen
+            )
+
+    # ==================================================
+    # HEALTH BAR
+    # ==================================================
+
+    def draw_health_bar(self, screen):
+
+        bar_width = self.image.get_width()
+
+        bar_height = 5
+
+        bar_x = int(self.x)
+
+        bar_y = max(
+            0,
+            int(self.y) - 8
+        )
+
+        health_ratio = max(
+            0,
+            self.health / self.max_health
+        )
+
+        current_bar_width = int(
+            bar_width
+            * health_ratio
+        )
+
+        # Nền đỏ
+        pygame.draw.rect(
+            screen,
+            (180, 40, 40),
+            (
+                bar_x,
+                bar_y,
+                bar_width,
+                bar_height
+            )
+        )
+
+        # Máu hiện tại
+        pygame.draw.rect(
+            screen,
+            (40, 220, 80),
+            (
+                bar_x,
+                bar_y,
+                current_bar_width,
+                bar_height
+            )
+        )
+
     # ==================================================
     # TAKE DAMAGE
     # ==================================================
 
-    def take_damage(self, damage=1):
+    def take_damage(
+        self,
+        damage=1
+    ):
 
         self.health -= damage
 
@@ -107,10 +222,14 @@ class Enemy:
     # RESPAWN
     # ==================================================
 
-    def respawn(self, x, y):
+    def respawn(
+        self,
+        x,
+        y
+    ):
 
-        self.x = x
-        self.y = y
+        self.x = float(x)
+        self.y = float(y)
 
         self.health = self.max_health
 
@@ -120,12 +239,123 @@ class Enemy:
     # SET SPEED
     # ==================================================
 
-    def set_speed(self, new_speed):
+    def set_speed(
+        self,
+        new_base_speed
+    ):
 
-        # Giữ nguyên hướng hiện tại
+        # Tốc độ gốc tăng theo level
+        self.base_speed = new_base_speed
+
+        # Mỗi loại giữ multiplier riêng
+        self.speed = (
+            self.base_speed
+            * self.speed_multiplier
+        )
+
+        # Giữ nguyên hướng
         if self.x_change >= 0:
-            self.x_change = new_speed
-        else:
-            self.x_change = -new_speed
 
-        self.speed = new_speed
+            self.x_change = abs(
+                self.speed
+            )
+
+        else:
+
+            self.x_change = -abs(
+                self.speed
+            )
+
+
+# ==================================================
+# NORMAL ENEMY
+# ==================================================
+
+class NormalEnemy(Enemy):
+    def __init__(
+        self,
+        image,
+        x,
+        y,
+        speed,
+        drop_distance
+    ):
+
+        super().__init__(
+            image=image,
+            x=x,
+            y=y,
+            speed=speed,
+            drop_distance=drop_distance,
+
+            health=1,
+            score=NORMAL_ENEMY_SCORE,
+
+            enemy_type="normal",
+
+            speed_multiplier=1.0
+        )
+
+
+# ==================================================
+# FAST ENEMY
+# ==================================================
+
+class FastEnemy(Enemy):
+    def __init__(
+        self,
+        image,
+        x,
+        y,
+        speed,
+        drop_distance
+    ):
+
+        super().__init__(
+            image=image,
+            x=x,
+            y=y,
+            speed=speed,
+            drop_distance=drop_distance,
+
+            health=1,
+            score=FAST_ENEMY_SCORE,
+
+            enemy_type="fast",
+
+            speed_multiplier=(
+                FAST_ENEMY_SPEED_MULTIPLIER
+            )
+        )
+
+
+# ==================================================
+# TANK ENEMY
+# ==================================================
+
+class TankEnemy(Enemy):
+    def __init__(
+        self,
+        image,
+        x,
+        y,
+        speed,
+        drop_distance
+    ):
+
+        super().__init__(
+            image=image,
+            x=x,
+            y=y,
+            speed=speed,
+            drop_distance=drop_distance,
+
+            health=TANK_ENEMY_HEALTH,
+            score=TANK_ENEMY_SCORE,
+
+            enemy_type="tank",
+
+            speed_multiplier=(
+                TANK_ENEMY_SPEED_MULTIPLIER
+            )
+        )
