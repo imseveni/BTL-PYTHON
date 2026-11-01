@@ -23,9 +23,6 @@ class Bullet:
         #  1: bay xuống
         self.direction = direction
 
-class Bullet:
-    def __init__(self, x, y, direction=-1, speed=8, damage=1, color=None, image=None):
-        self.direction = direction
         self.speed = speed
 
         self.damage = damage
@@ -107,7 +104,6 @@ class Bullet:
     # ==================================================
 
     def draw(self, screen):
-        screen.blit(self.image, self.rect)
 
         screen.blit(
             self.image,
