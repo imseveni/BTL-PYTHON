@@ -1,25 +1,44 @@
+import random
+
 import pygame
 
 from config import (
     SCREEN_WIDTH,
     SCREEN_HEIGHT,
     FPS,
+
     BACKGROUND_IMAGE,
     ICON_IMAGE,
+
+    HEALTH_POWERUP_IMAGE,
+    SHIELD_POWERUP_IMAGE,
+
     GAME_OVER_Y,
+    HIGH_SCORE_FILE,
+    LEVEL_SCORE_STEP,
+
+    STATE_MENU,
+    STATE_PLAYING,
+    STATE_PAUSED,
+    STATE_GAME_OVER,
+    STATE_HIGH_SCORE,
+
     BLACK,
-    WHITE
 )
 
 from entities.player import Player
+from entities.powerup import PowerUp
 
 from managers.enemy_manager import EnemyManager
 from managers.bullet_manager import BulletManager
+from managers.powerup_manager import PowerUpManager
 from managers.sound_manager import SoundManager
 
 from ui.menu import Menu
 from ui.hud import HUD
+from ui.pause import PauseUI
 from ui.game_over import GameOverUI
+from ui.high_score import HighScoreUI
 
 from utils.collision import check_collision
 
@@ -63,6 +82,18 @@ class Game:
         ).convert()
 
         # ==================================================
+        # POWERUP IMAGE
+        # ==================================================
+
+        self.health_powerup_image = pygame.image.load(
+            str(HEALTH_POWERUP_IMAGE)
+        ).convert_alpha()
+
+        self.shield_powerup_image = pygame.image.load(
+            str(SHIELD_POWERUP_IMAGE)
+        ).convert_alpha()
+
+        # ==================================================
         # CLOCK
         # ==================================================
 
@@ -78,6 +109,8 @@ class Game:
 
         self.bullet_manager = BulletManager()
 
+        self.power_up_manager = PowerUpManager()
+
         self.sound_manager = SoundManager()
 
         # ==================================================
@@ -88,7 +121,11 @@ class Game:
 
         self.hud = HUD()
 
+        self.pause_ui = PauseUI()
+
         self.game_over_ui = GameOverUI()
+
+        self.high_score_ui = HighScoreUI()
 
         # ==================================================
         # GAME DATA
@@ -98,19 +135,77 @@ class Game:
 
         self.level = 1
 
+        self.high_score = self.load_high_score()
+
         # ==================================================
         # GAME STATE
         # ==================================================
 
         self.running = True
 
-        self.state = "MENU"
+        self.state = STATE_MENU
 
         # ==================================================
         # MUSIC
         # ==================================================
 
         self.sound_manager.play_music()
+
+    # ==================================================
+    # CHANGE STATE
+    # ==================================================
+
+    def change_state(self, new_state):
+
+        self.state = new_state
+
+        # Khi rời khỏi PLAYING
+        # thì dừng Player
+        if new_state != STATE_PLAYING:
+
+            self.player.stop()
+
+    # ==================================================
+    # START GAME
+    # ==================================================
+
+    def start_game(self):
+
+        self.reset_game()
+
+        self.change_state(
+            STATE_PLAYING
+        )
+
+    # ==================================================
+    # END GAME
+    # ==================================================
+
+    def end_game(self):
+
+        self.update_high_score()
+
+        self.change_state(
+            STATE_GAME_OVER
+        )
+
+    # ==================================================
+    # TOGGLE PAUSE
+    # ==================================================
+
+    def toggle_pause(self):
+
+        if self.state == STATE_PLAYING:
+
+            self.change_state(
+                STATE_PAUSED
+            )
+
+        elif self.state == STATE_PAUSED:
+
+            self.change_state(
+                STATE_PLAYING
+            )
 
     # ==================================================
     # HANDLE EVENTS
@@ -120,131 +215,304 @@ class Game:
 
         for event in pygame.event.get():
 
-            # ==========================================
-            # QUIT
-            # ==========================================
+            # ==================================================
+            # QUIT WINDOW
+            # ==================================================
 
             if event.type == pygame.QUIT:
 
                 self.running = False
 
-            # ==========================================
-            # KEY DOWN
-            # ==========================================
+                continue
 
-            if event.type == pygame.KEYDOWN:
+            # ==================================================
+            # MENU
+            # ==================================================
 
-                # --------------------------------------
-                # MENU
-                # --------------------------------------
+            if self.state == STATE_MENU:
 
-                if self.state == "MENU":
+                # -------------------------
+                # KEYBOARD
+                # -------------------------
 
+                if event.type == pygame.KEYDOWN:
+
+                    # ENTER -> PLAY
                     if event.key == pygame.K_RETURN:
 
-                        self.reset_game()
+                        self.start_game()
 
-                        self.state = "PLAYING"
-
+                    # ESC -> QUIT
                     elif event.key == pygame.K_ESCAPE:
 
                         self.running = False
 
-                    continue
+                # -------------------------
+                # MOUSE
+                # -------------------------
 
-                # --------------------------------------
-                # GAME OVER
-                # --------------------------------------
+                elif event.type == pygame.MOUSEBUTTONDOWN:
 
-                if self.state == "GAME_OVER":
+                    if event.button == 1:
+
+                        action = self.menu.handle_click(
+                            event.pos
+                        )
+
+                        if action == "PLAY":
+
+                            self.start_game()
+
+                        elif action == "HIGH_SCORE":
+
+                            self.change_state(
+                                STATE_HIGH_SCORE
+                            )
+
+                        elif action == "QUIT":
+
+                            self.running = False
+
+                continue
+
+            # ==================================================
+            # HIGH SCORE
+            # ==================================================
+
+            if self.state == STATE_HIGH_SCORE:
+
+                if event.type == pygame.KEYDOWN:
+
+                    if event.key == pygame.K_ESCAPE:
+
+                        self.change_state(
+                            STATE_MENU
+                        )
+
+                continue
+
+            # ==================================================
+            # GAME OVER
+            # ==================================================
+
+            if self.state == STATE_GAME_OVER:
+
+                # -------------------------
+                # KEYBOARD
+                # -------------------------
+
+                if event.type == pygame.KEYDOWN:
 
                     if event.key == pygame.K_r:
 
-                        self.reset_game()
+                        self.start_game()
 
-                        self.state = "PLAYING"
+                    elif event.key == pygame.K_m:
+
+                        self.change_state(
+                            STATE_MENU
+                        )
 
                     elif event.key == pygame.K_ESCAPE:
 
                         self.running = False
 
-                    continue
+                # -------------------------
+                # MOUSE
+                # -------------------------
 
-                # --------------------------------------
-                # PAUSE
-                # --------------------------------------
+                elif event.type == pygame.MOUSEBUTTONDOWN:
 
-                if event.key == pygame.K_p:
+                    if event.button == 1:
 
-                    if self.state == "PLAYING":
+                        action = (
+                            self.game_over_ui.handle_click(
+                                event.pos
+                            )
+                        )
 
-                        self.state = "PAUSED"
+                        if action == "RESTART":
 
-                        self.player.stop()
+                            self.start_game()
 
-                    elif self.state == "PAUSED":
+                        elif action == "MENU":
 
-                        self.state = "PLAYING"
+                            self.change_state(
+                                STATE_MENU
+                            )
 
-                    continue
+                        elif action == "QUIT":
 
-                # --------------------------------------
-                # CHỈ XỬ LÝ GAMEPLAY KHI PLAYING
-                # --------------------------------------
+                            self.running = False
 
-                if self.state != "PLAYING":
-                    continue
+                continue
 
-                # LEFT
-                if (
-                    event.key == pygame.K_LEFT
-                    or event.key == pygame.K_a
-                ):
+            # ==================================================
+            # PAUSED
+            # ==================================================
 
-                    self.player.move_left()
+            if self.state == STATE_PAUSED:
 
-                # RIGHT
-                elif (
-                    event.key == pygame.K_RIGHT
-                    or event.key == pygame.K_d
-                ):
+                # -------------------------
+                # KEYBOARD
+                # -------------------------
 
-                    self.player.move_right()
+                if event.type == pygame.KEYDOWN:
 
-                # SHOOT
-                elif event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_p:
 
-                    shot = self.bullet_manager.shoot(
-                        self.player.rect.centerx,
-                        self.player.rect.top
-                    )
+                        self.toggle_pause()
 
-                    # Chỉ phát sound nếu thực sự bắn
-                    if shot:
-                        self.sound_manager.play_shoot()
+                    elif event.key == pygame.K_m:
 
-                # ESC
-                elif event.key == pygame.K_ESCAPE:
+                        self.change_state(
+                            STATE_MENU
+                        )
 
-                    self.running = False
+                    elif event.key == pygame.K_ESCAPE:
 
-            # ==========================================
-            # KEY UP
-            # ==========================================
+                        self.running = False
 
-            if event.type == pygame.KEYUP:
+                # -------------------------
+                # MOUSE
+                # -------------------------
 
-                if event.key in (
-                    pygame.K_LEFT,
-                    pygame.K_RIGHT,
-                    pygame.K_a,
-                    pygame.K_d
-                ):
+                elif event.type == pygame.MOUSEBUTTONDOWN:
 
-                    self.player.stop()
+                    if event.button == 1:
+
+                        action = self.pause_ui.handle_click(
+                            event.pos
+                        )
+
+                        if action == "CONTINUE":
+
+                            self.change_state(
+                                STATE_PLAYING
+                            )
+
+                        elif action == "MENU":
+
+                            self.change_state(
+                                STATE_MENU
+                            )
+
+                        elif action == "QUIT":
+
+                            self.running = False
+
+                continue
+
+            # ==================================================
+            # PLAYING
+            # ==================================================
+
+            if self.state == STATE_PLAYING:
+
+                if event.type == pygame.KEYDOWN:
+
+                    # P -> Pause
+                    if event.key == pygame.K_p:
+
+                        self.toggle_pause()
+
+                    # ESC -> Quit
+                    elif event.key == pygame.K_ESCAPE:
+
+                        self.running = False
 
     # ==================================================
-    # HANDLE BULLET - ENEMY COLLISION
+    # HANDLE PLAYER INPUT
+    # ==================================================
+
+    def handle_player_input(self):
+
+        keys = pygame.key.get_pressed()
+
+        # ==================================================
+        # MOVEMENT
+        # ==================================================
+
+        left = (
+            keys[pygame.K_LEFT]
+            or keys[pygame.K_a]
+        )
+
+        right = (
+            keys[pygame.K_RIGHT]
+            or keys[pygame.K_d]
+        )
+
+        if left and not right:
+
+            self.player.move_left()
+
+        elif right and not left:
+
+            self.player.move_right()
+
+        else:
+
+            self.player.stop()
+
+        # ==================================================
+        # SHOOT
+        # ==================================================
+
+        if keys[pygame.K_SPACE]:
+
+            shot = self.bullet_manager.shoot(
+                self.player.rect.centerx,
+                self.player.rect.top
+            )
+
+            if shot:
+
+                self.sound_manager.play_shoot()
+
+    # ==================================================
+    # CREATE POWERUP
+    # ==================================================
+
+    def create_random_powerup(
+        self,
+        x,
+        y
+    ):
+
+        # 10% khả năng xuất hiện PowerUp
+        if random.randint(1, 10) != 8:
+
+            return
+
+        power_type = random.choice(
+            [
+                "HP",
+                "DEFENSE"
+            ]
+        )
+
+        if power_type == "HP":
+
+            image = self.health_powerup_image
+
+        else:
+
+            image = self.shield_powerup_image
+
+        powerup = PowerUp(
+            image=image,
+            x=x,
+            y=y,
+            power_type=power_type
+        )
+
+        self.power_up_manager.add(
+            powerup
+        )
+
+    # ==================================================
+    # BULLET - ENEMY COLLISION
     # ==================================================
 
     def handle_bullet_enemy_collision(self):
@@ -258,28 +526,69 @@ class Game:
                     bullet
                 ):
 
-                    # Xóa bullet
+                    # ======================================
+                    # REMOVE BULLET
+                    # ======================================
+
                     self.bullet_manager.remove(
                         bullet
                     )
 
-                    # Enemy nhận damage
+                    # ======================================
+                    # DAMAGE ENEMY
+                    # ======================================
+
                     dead = enemy.take_damage()
 
-                    # Enemy chết
+                    # ======================================
+                    # ENEMY DEAD
+                    # ======================================
+
                     if dead:
+
+                        # Lưu vị trí trước khi respawn
+                        enemy_x = enemy.rect.centerx
+                        enemy_y = enemy.rect.centery
+
+                        # ------------------------------
+                        # SOUND
+                        # ------------------------------
 
                         self.sound_manager.play_explosion()
 
-                        # Cộng điểm
+                        # ------------------------------
+                        # EXPLOSION
+                        # ------------------------------
+
+                        self.bullet_manager.add_explosion(
+                            enemy_x,
+                            enemy_y
+                        )
+
+                        # ------------------------------
+                        # SCORE
+                        # ------------------------------
+
                         self.score += enemy.score
 
-                        # Respawn
+                        # ------------------------------
+                        # POWERUP
+                        # ------------------------------
+
+                        self.create_random_powerup(
+                            enemy_x,
+                            enemy_y
+                        )
+
+                        # ------------------------------
+                        # RESPAWN
+                        # ------------------------------
+
                         self.enemy_manager.respawn(
                             enemy
                         )
 
-                    # Một bullet chỉ va chạm 1 enemy
+                    # Một bullet chỉ hit một enemy
                     break
 
     # ==================================================
@@ -297,30 +606,149 @@ class Game:
 
                 damaged = self.player.take_damage()
 
-                # Chỉ xử lý nếu thực sự mất máu
+                # take_damage() = False
+                # khi Player đang bất tử
                 if damaged:
 
+                    # Lưu vị trí trước respawn
+                    enemy_x = enemy.rect.centerx
+                    enemy_y = enemy.rect.centery
+
+                    # Sound
                     self.sound_manager.play_explosion()
 
+                    # Explosion
+                    self.bullet_manager.add_explosion(
+                        enemy_x,
+                        enemy_y
+                    )
+
+                    # Respawn enemy
                     self.enemy_manager.respawn(
                         enemy
                     )
 
+                    # Player hết mạng
                     if self.player.lives <= 0:
 
-                        self.state = "GAME_OVER"
+                        self.end_game()
 
                         return
 
     # ==================================================
-    # HANDLE COLLISION
+    # ENEMY BULLET - PLAYER COLLISION
+    # ==================================================
+
+    def handle_enemy_bullet_player_collision(
+        self
+    ):
+
+        for bullet in (
+            self.bullet_manager.enemy_bullets[:]
+        ):
+
+            if check_collision(
+                bullet,
+                self.player
+            ):
+
+                # Đạn chạm Player thì biến mất
+                self.bullet_manager.remove_enemy_bullet(
+                    bullet
+                )
+
+                # Lưu lives trước khi damage
+                old_lives = self.player.lives
+
+                damaged = self.player.take_damage()
+
+                # Player đang bất tử
+                if not damaged:
+
+                    continue
+
+                # Nếu thực sự mất mạng
+                if self.player.lives < old_lives:
+
+                    self.sound_manager.play_explosion()
+
+                    self.bullet_manager.add_explosion(
+                        self.player.rect.centerx,
+                        self.player.rect.centery
+                    )
+
+                # Hết mạng
+                if self.player.lives <= 0:
+
+                    self.end_game()
+
+                    return
+
+    # ==================================================
+    # PLAYER - POWERUP COLLISION
+    # ==================================================
+
+    def handle_player_powerup_collision(self):
+
+        # Dùng copy vì sẽ xóa PowerUp
+        for powerup in self.power_up_manager.powerups[:]:
+
+            if check_collision(
+                powerup,
+                self.player
+            ):
+
+                # Player nhận item
+                self.player.take_item(
+                    powerup.power_type
+                )
+
+                # Xóa item sau khi nhận
+                self.power_up_manager.remove(
+                    powerup
+                )
+
+    # ==================================================
+    # HANDLE COLLISIONS
     # ==================================================
 
     def handle_collisions(self):
 
+        # ==================================================
+        # PLAYER BULLET -> ENEMY
+        # ==================================================
+
         self.handle_bullet_enemy_collision()
 
+        if self.state != STATE_PLAYING:
+
+            return
+
+        # ==================================================
+        # ENEMY -> PLAYER
+        # ==================================================
+
         self.handle_enemy_player_collision()
+
+        if self.state != STATE_PLAYING:
+
+            return
+
+        # ==================================================
+        # ENEMY BULLET -> PLAYER
+        # ==================================================
+
+        self.handle_enemy_bullet_player_collision()
+
+        if self.state != STATE_PLAYING:
+
+            return
+
+        # ==================================================
+        # PLAYER -> POWERUP
+        # ==================================================
+
+        self.handle_player_powerup_collision()
 
     # ==================================================
     # UPDATE LEVEL
@@ -328,10 +756,8 @@ class Game:
 
     def update_level(self):
 
-        # 100 điểm = tăng 1 level
-
         new_level = (
-            self.score // 100
+            self.score // LEVEL_SCORE_STEP
         ) + 1
 
         if new_level > self.level:
@@ -348,21 +774,25 @@ class Game:
 
     def check_game_over(self):
 
-        for enemy in self.enemy_manager.enemies:
-
-            if enemy.y > GAME_OVER_Y:
-
-                self.state = "GAME_OVER"
-
-                self.player.stop()
-
-                return
+        # ==================================================
+        # PLAYER HẾT MẠNG
+        # ==================================================
 
         if self.player.lives <= 0:
 
-            self.state = "GAME_OVER"
+            self.end_game()
 
-            self.player.stop()
+            return
+
+        # ==================================================
+        # ENEMY XUỐNG QUÁ THẤP
+        # ==================================================
+
+        if self.enemy_manager.has_enemy_reached_bottom():
+
+            self.end_game()
+
+            return
 
     # ==================================================
     # UPDATE
@@ -370,78 +800,67 @@ class Game:
 
     def update(self):
 
-        if self.state != "PLAYING":
+        if self.state != STATE_PLAYING:
+
             return
 
-        # Player
+        # ==================================================
+        # INPUT
+        # ==================================================
+
+        self.handle_player_input()
+
+        # ==================================================
+        # PLAYER
+        # ==================================================
+
         self.player.update()
 
-        # Enemy
+        # ==================================================
+        # ENEMY
+        # ==================================================
+
         self.enemy_manager.update()
 
-        # Bullet
+        # Enemy thử bắn
+        self.enemy_manager.try_shoot(
+            self.bullet_manager
+        )
+
+        # ==================================================
+        # BULLET + EXPLOSION
+        # ==================================================
+
         self.bullet_manager.update()
 
-        # Collision
+        # ==================================================
+        # POWERUP
+        # ==================================================
+
+        self.power_up_manager.update()
+
+        # ==================================================
+        # COLLISION
+        # ==================================================
+
         self.handle_collisions()
 
-        # Level
+        # Collision có thể làm Game Over
+        if self.state != STATE_PLAYING:
+
+            return
+
+        # ==================================================
+        # LEVEL
+        # ==================================================
+
         self.update_level()
 
-        # Game Over
+        # ==================================================
+        # GAME OVER
+        # ==================================================
+
         self.check_game_over()
-
-    # ==================================================
-    # DRAW PAUSE
-    # ==================================================
-
-    def draw_pause(self):
-
-        font = pygame.font.Font(
-            None,
-            64
-        )
-
-        text = font.render(
-            "PAUSED",
-            True,
-            WHITE
-        )
-
-        rect = text.get_rect(
-            center=(
-                SCREEN_WIDTH // 2,
-                SCREEN_HEIGHT // 2
-            )
-        )
-
-        self.screen.blit(
-            text,
-            rect
-        )
-
-        sub_font = pygame.font.Font(
-            None,
-            32
-        )
-
-        sub_text = sub_font.render(
-            "Press P to continue",
-            True,
-            WHITE
-        )
-
-        sub_rect = sub_text.get_rect(
-            center=(
-                SCREEN_WIDTH // 2,
-                SCREEN_HEIGHT // 2 + 60
-            )
-        )
-
-        self.screen.blit(
-            sub_text,
-            sub_rect
-        )
 
     # ==================================================
     # DRAW GAME
@@ -459,8 +878,13 @@ class Game:
             self.screen
         )
 
-        # Bullet
+        # Bullet + Explosion
         self.bullet_manager.draw(
+            self.screen
+        )
+
+        # PowerUp
+        self.power_up_manager.draw(
             self.screen
         )
 
@@ -478,12 +902,18 @@ class Game:
 
     def draw(self):
 
-        # Clear
+        # ==================================================
+        # CLEAR
+        # ==================================================
+
         self.screen.fill(
             BLACK
         )
 
-        # Background
+        # ==================================================
+        # BACKGROUND
+        # ==================================================
+
         self.screen.blit(
             self.background,
             (0, 0)
@@ -493,10 +923,21 @@ class Game:
         # MENU
         # ==================================================
 
-        if self.state == "MENU":
+        if self.state == STATE_MENU:
 
             self.menu.draw(
                 self.screen
+            )
+
+        # ==================================================
+        # HIGH SCORE
+        # ==================================================
+
+        elif self.state == STATE_HIGH_SCORE:
+
+            self.high_score_ui.draw(
+                self.screen,
+                self.high_score
             )
 
         # ==================================================
@@ -507,18 +948,30 @@ class Game:
 
             self.draw_game()
 
-            # Pause
-            if self.state == "PAUSED":
+            # ==============================================
+            # PAUSED
+            # ==============================================
 
-                self.draw_pause()
+            if self.state == STATE_PAUSED:
 
-            # Game Over
-            elif self.state == "GAME_OVER":
+                self.pause_ui.draw(
+                    self.screen
+                )
+
+            # ==============================================
+            # GAME OVER
+            # ==============================================
+
+            elif self.state == STATE_GAME_OVER:
 
                 self.game_over_ui.draw(
                     self.screen,
                     self.score
                 )
+
+        # ==================================================
+        # UPDATE DISPLAY
+        # ==================================================
 
         pygame.display.flip()
 
@@ -538,6 +991,70 @@ class Game:
 
         self.bullet_manager.reset()
 
+        self.power_up_manager.reset()
+
+    # ==================================================
+    # LOAD HIGH SCORE
+    # ==================================================
+
+    def load_high_score(self):
+
+        try:
+
+            with open(
+                HIGH_SCORE_FILE,
+                "r",
+                encoding="utf-8"
+            ) as file:
+
+                content = file.read().strip()
+
+                if content == "":
+
+                    return 0
+
+                return int(content)
+
+        except (
+            FileNotFoundError,
+            ValueError
+        ):
+
+            return 0
+
+    # ==================================================
+    # SAVE HIGH SCORE
+    # ==================================================
+
+    def save_high_score(self):
+
+        HIGH_SCORE_FILE.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        with open(
+            HIGH_SCORE_FILE,
+            "w",
+            encoding="utf-8"
+        ) as file:
+
+            file.write(
+                str(self.high_score)
+            )
+
+    # ==================================================
+    # UPDATE HIGH SCORE
+    # ==================================================
+
+    def update_high_score(self):
+
+        if self.score > self.high_score:
+
+            self.high_score = self.score
+
+            self.save_high_score()
+
     # ==================================================
     # GAME LOOP
     # ==================================================
@@ -551,11 +1068,11 @@ class Game:
                 FPS
             )
 
-            # 1. Events
+            # Events
             self.handle_events()
 
-            # 2. Logic
+            # Logic
             self.update()
 
-            # 3. Render
+            # Render
             self.draw()

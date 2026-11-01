@@ -4,22 +4,31 @@ class PowerUp:
         image,
         x,
         y,
-        power_type
+        power_type,
+        speed=3
     ):
 
         self.image = image
 
         self.power_type = power_type
 
-        self.speed = 3
+        self.speed = speed
 
         self.rect = self.image.get_rect(
             center=(x, y)
         )
 
+    # ==================================================
+    # UPDATE
+    # ==================================================
+
     def update(self):
 
         self.rect.y += self.speed
+
+    # ==================================================
+    # DRAW
+    # ==================================================
 
     def draw(self, screen):
 
@@ -27,6 +36,10 @@ class PowerUp:
             self.image,
             self.rect
         )
+
+    # ==================================================
+    # CHECK OUTSIDE
+    # ==================================================
 
     def is_outside(self, screen_height):
 

@@ -1,0 +1,5 @@
+.cph/
+__pycache__/
+*.pyc
+
+SpaceInvaders/data/highscore.txt
