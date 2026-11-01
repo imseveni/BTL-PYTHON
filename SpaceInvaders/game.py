@@ -1,5 +1,6 @@
 import pygame
 
+
 from config import (
     SCREEN_WIDTH,
     SCREEN_HEIGHT,
@@ -21,7 +22,9 @@ from config import (
 
 
 from entities.player import Player
-
+from entities.powerup import PowerUp
+import random
+from managers.power_up_manager import PowerUpManager
 from managers.enemy_manager import EnemyManager
 from managers.bullet_manager import BulletManager
 from managers.sound_manager import SoundManager
@@ -105,6 +108,7 @@ class Game:
 
         self.sound_manager = SoundManager()
 
+        self.power_up_manager = PowerUpManager()
         # ==================================================
         # UI
         # ==================================================
@@ -537,6 +541,14 @@ class Game:
                         self.enemy_manager.respawn(
                             enemy
                         )
+                    # Nhan Item
+                    n = random.randint(1, 10)
+                    if(n == 8):
+                        item = random.choice([
+                            PowerUp('assets/images/health.png', enemy.x, enemy.y, 'HP'),
+                            PowerUp('assets/images/shield.png', enemy.x, enemy.y, 'Defense')
+                        ])
+                        self.power_up_manager.powerups.append(item)
 
                     # Một bullet chỉ hit một enemy
                     break
@@ -581,7 +593,22 @@ class Game:
                         return
 
     # ==================================================
-    # HANDLE COLLISIONS
+    # PLAYER - POWERUP COLLISION
+    # ==================================================
+    def handle_player_power_up_collision(self):
+        for powerUp in self.power_up_manager.powerups:
+            if check_collision(
+                    powerUp,
+                    self.player
+                ):
+
+                self.player.take_item(powerUp.details)
+                self.power_up_manager.powerups.remove(powerUp)
+
+
+
+    # ==================================================
+    # HANDLE COLLISION
     # ==================================================
 
     def handle_collisions(self):
@@ -593,6 +620,8 @@ class Game:
             return
 
         self.handle_enemy_player_collision()
+
+        self.handle_player_power_up_collision()
 
     # ==================================================
     # UPDATE LEVEL
@@ -724,6 +753,9 @@ class Game:
             self.screen
         )
 
+        # PowerUP
+        self.power_up_manager.draw(self.screen)
+
         # HUD
         self.hud.draw(
             self.screen,
@@ -731,6 +763,7 @@ class Game:
             self.player.lives,
             self.level
         )
+
 
     # ==================================================
     # DRAW
@@ -833,71 +866,7 @@ class Game:
         # Bullet
         self.bullet_manager.reset()
 
-        # KHÔNG reset high_score
-        # vì High Score cần giữ qua các ván chơi
-
-    # ==================================================
-    # LOAD HIGH SCORE
-    # ==================================================
-
-    def load_high_score(self):
-
-        try:
-
-            with open(
-                HIGH_SCORE_FILE,
-                "r",
-                encoding="utf-8"
-            ) as file:
-
-                content = file.read().strip()
-
-                # File rỗng
-                if content == "":
-                    return 0
-
-                return int(content)
-
-        except (
-            FileNotFoundError,
-            ValueError
-        ):
-
-            return 0
-
-    # ==================================================
-    # SAVE HIGH SCORE
-    # ==================================================
-
-    def save_high_score(self):
-
-        # Đảm bảo thư mục data tồn tại
-        HIGH_SCORE_FILE.parent.mkdir(
-            parents=True,
-            exist_ok=True
-        )
-
-        with open(
-            HIGH_SCORE_FILE,
-            "w",
-            encoding="utf-8"
-        ) as file:
-
-            file.write(
-                str(self.high_score)
-            )
-
-    # ==================================================
-    # UPDATE HIGH SCORE
-    # ==================================================
-
-    def update_high_score(self):
-
-        if self.score > self.high_score:
-
-            self.high_score = self.score
-
-            self.save_high_score()
+        self.power_up_manager.reset()
 
     # ==================================================
     # GAME LOOP

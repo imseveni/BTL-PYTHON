@@ -21,7 +21,7 @@ HIGH_SCORE_FILE = DATA_DIR / "highscore.txt"
 # ==================================================
 
 BACKGROUND_IMAGE = IMAGES_DIR / "background.png"
-PLAYER_IMAGE = IMAGES_DIR / "player.png"
+PLAYER_IMAGE = IMAGES_DIR / "player_new.png"
 ENEMY_IMAGE = IMAGES_DIR / "enemy.png"
 BULLET_IMAGE = IMAGES_DIR / "bullet.png"
 ICON_IMAGE = IMAGES_DIR / "ufo.png"
