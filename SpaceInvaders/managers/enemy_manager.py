@@ -1,5 +1,4 @@
 import random
-
 import pygame
 
 from entities.enemy import (
@@ -33,7 +32,7 @@ from config import (
 
 
 class EnemyManager:
-    def __init__(self):
+    """Quản lý danh sách Enemy, sinh quái, cập nhật vị trí và độ khó theo Level."""
 
         # ==================================================
         # LOAD IMAGES
@@ -60,6 +59,7 @@ class EnemyManager:
         self.current_level = 1
 
         self.current_speed = ENEMY_SPEED
+        self.current_enemy_count = ENEMY_COUNT
 
         self.current_enemy_count = ENEMY_COUNT
 
@@ -147,15 +147,11 @@ class EnemyManager:
             - image.get_width()
         )
 
-        x = random.randint(
-            0,
-            max_x
-        )
+    def create_enemy(self, enemy_class=None):
+        x, y = self._random_position()
 
-        y = random.randint(
-            ENEMY_MIN_Y,
-            ENEMY_MAX_Y
-        )
+        if enemy_class is None:
+            enemy_class = self._choose_enemy_class()
 
         return x, y
 
@@ -209,7 +205,6 @@ class EnemyManager:
     # ==================================================
 
     def spawn_enemies(self):
-
         self.enemies.clear()
 
         for _ in range(
@@ -221,11 +216,10 @@ class EnemyManager:
             )
 
     # ==================================================
-    # UPDATE
+    # UPDATE & DRAW
     # ==================================================
 
     def update(self):
-
         for enemy in self.enemies:
 
             enemy.update()
@@ -289,7 +283,6 @@ class EnemyManager:
     # ==================================================
 
     def draw(self, screen):
-
         for enemy in self.enemies:
 
             enemy.draw(
@@ -360,10 +353,25 @@ class EnemyManager:
 
         # Cập nhật Enemy đang tồn tại
         for enemy in self.enemies:
+            enemy.set_speed(self.current_speed)
 
-            enemy.set_speed(
-                self.current_speed
-            )
+        # Tăng số lượng enemy mỗi khi lên level (+2 mỗi level, tối đa 14)
+        target_count = min(
+            ENEMY_COUNT + (self.current_level - 1) * 2,
+            self.MAX_ENEMIES
+        )
+        self.current_enemy_count = target_count
+
+        while len(self.enemies) < self.current_enemy_count:
+            self.enemies.append(self.create_enemy())
+
+    # ==================================================
+    # CHECK BOTTOM LIMIT
+    # ==================================================
+
+    def has_enemy_reached_bottom(self, limit_y=GAME_OVER_Y):
+        """Kiểm tra xem có enemy nào tràn xuống quá giới hạn Y hay không."""
+        return any(enemy.y > limit_y for enemy in self.enemies)
 
         # ==================================================
         # ENEMY COUNT

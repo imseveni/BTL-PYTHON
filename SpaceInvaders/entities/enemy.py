@@ -15,6 +15,8 @@ from config import (
 
 
 class Enemy:
+    """Class cơ sở (Base Class) đại diện cho một Enemy trong game."""
+
     def __init__(
         self,
         image,
@@ -33,6 +35,8 @@ class Enemy:
         # ==================================================
 
         self.image = image
+        self.x = float(x)
+        self.y = float(y)
 
         # ==================================================
         # POSITION
@@ -62,6 +66,7 @@ class Enemy:
 
         self.x_change = self.speed
 
+        self.x_change = self.speed
         self.drop_distance = drop_distance
 
         # ==================================================
@@ -82,26 +87,27 @@ class Enemy:
         # ==================================================
 
         self.rect = self.image.get_rect()
-
         self.update_rect()
+
+    @staticmethod
+    def tint_image(image, tint_color):
+        """Tạo bản sao ảnh có phủ màu để phân biệt các loại Enemy trên màn hình."""
+        tinted = image.copy()
+        tinted.fill(tint_color, special_flags=pygame.BLEND_RGBA_MULT)
+        return tinted
 
     # ==================================================
     # UPDATE RECT
     # ==================================================
 
     def update_rect(self):
-
-        self.rect.topleft = (
-            int(self.x),
-            int(self.y)
-        )
+        self.rect.topleft = (int(self.x), int(self.y))
 
     # ==================================================
     # UPDATE
     # ==================================================
 
     def update(self):
-
         self.x += self.x_change
 
         max_x = (
@@ -111,24 +117,14 @@ class Enemy:
 
         # Chạm biên trái
         if self.x <= 0:
-
             self.x = 0
-
-            self.x_change = abs(
-                self.speed
-            )
-
+            self.x_change = abs(self.speed)
             self.y += self.drop_distance
 
         # Chạm biên phải
         elif self.x >= max_x:
-
             self.x = max_x
-
-            self.x_change = -abs(
-                self.speed
-            )
-
+            self.x_change = -abs(self.speed)
             self.y += self.drop_distance
 
         self.update_rect()
@@ -138,13 +134,27 @@ class Enemy:
     # ==================================================
 
     def draw(self, screen):
+        screen.blit(self.image, (int(self.x), int(self.y)))
 
-        screen.blit(
-            self.image,
-            (
-                int(self.x),
-                int(self.y)
-            )
+        # Vẽ thanh máu nếu Enemy có nhiều hơn 1 HP (ví dụ: TankEnemy)
+        if self.max_health > 1:
+            self.draw_health_bar(screen)
+
+    def draw_health_bar(self, screen):
+        bar_width = self.image.get_width()
+        bar_height = 5
+        bar_x = int(self.x)
+        bar_y = max(0, int(self.y) - 8)
+
+        health_ratio = max(0, self.health / self.max_health)
+        current_bar_width = int(bar_width * health_ratio)
+
+        # Nền đỏ (máu đã mất) và thanh xanh lá (máu hiện tại)
+        pygame.draw.rect(
+            screen, (180, 40, 40), (bar_x, bar_y, bar_width, bar_height)
+        )
+        pygame.draw.rect(
+            screen, (40, 220, 80), (bar_x, bar_y, current_bar_width, bar_height)
         )
 
         # Chỉ Tank hoặc enemy nhiều HP mới hiện thanh máu
@@ -215,7 +225,6 @@ class Enemy:
     ):
 
         self.health -= damage
-
         return self.health <= 0
 
     # ==================================================
@@ -232,7 +241,6 @@ class Enemy:
         self.y = float(y)
 
         self.health = self.max_health
-
         self.update_rect()
 
     # ==================================================
