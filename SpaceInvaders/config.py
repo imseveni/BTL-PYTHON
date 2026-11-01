@@ -8,9 +8,12 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 ASSETS_DIR = BASE_DIR / "assets"
+DATA_DIR = BASE_DIR / "data"
 
 IMAGES_DIR = ASSETS_DIR / "images"
 SOUNDS_DIR = ASSETS_DIR / "sounds"
+
+HIGH_SCORE_FILE = DATA_DIR / "highscore.txt"
 
 
 # ==================================================
@@ -44,6 +47,25 @@ FPS = 60
 
 
 # ==================================================
+# GAME STATE
+# ==================================================
+
+STATE_MENU = "MENU"
+STATE_PLAYING = "PLAYING"
+STATE_PAUSED = "PAUSED"
+STATE_GAME_OVER = "GAME_OVER"
+STATE_HIGH_SCORE = "HIGH_SCORE"
+
+
+# ==================================================
+# LEVEL
+# ==================================================
+
+# Mỗi 100 điểm tăng 1 level
+LEVEL_SCORE_STEP = 100
+
+
+# ==================================================
 # PLAYER
 # ==================================================
 
@@ -53,6 +75,7 @@ PLAYER_LIVES = 3
 PLAYER_START_X = 370
 PLAYER_START_Y = 480
 
+# Thời gian bất tử sau khi mất máu (milliseconds)
 PLAYER_INVINCIBLE_TIME = 1200
 
 

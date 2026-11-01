@@ -12,20 +12,103 @@ class Menu:
 
         self.title_font = pygame.font.Font(
             None,
-            72
+            80
         )
 
         self.font = pygame.font.Font(
             None,
-            36
+            48
         )
+
+        self.normal_color = WHITE
+        self.hover_color = (255, 255, 0)
+
+        # ==========================================
+        # BUTTON RECT
+        # ==========================================
+
+        button_width = 320
+        button_height = 60
+
+        center_x = SCREEN_WIDTH // 2
+
+        self.play_rect = pygame.Rect(
+            0,
+            0,
+            button_width,
+            button_height
+        )
+
+        self.play_rect.center = (
+            center_x,
+            int(SCREEN_HEIGHT * 0.58)
+        )
+
+        self.high_score_rect = pygame.Rect(
+            0,
+            0,
+            button_width,
+            button_height
+        )
+
+        self.high_score_rect.center = (
+            center_x,
+            int(SCREEN_HEIGHT * 0.70)
+        )
+
+        self.quit_rect = pygame.Rect(
+            0,
+            0,
+            button_width,
+            button_height
+        )
+
+        self.quit_rect.center = (
+            center_x,
+            int(SCREEN_HEIGHT * 0.82)
+        )
+
+    # ==========================================
+    # DRAW BUTTON
+    # ==========================================
+
+    def draw_button(
+        self,
+        screen,
+        text,
+        rect,
+        mouse_pos
+    ):
+
+        if rect.collidepoint(mouse_pos):
+            color = self.hover_color
+        else:
+            color = self.normal_color
+
+        text_surface = self.font.render(
+            text,
+            True,
+            color
+        )
+
+        text_rect = text_surface.get_rect(
+            center=rect.center
+        )
+
+        screen.blit(
+            text_surface,
+            text_rect
+        )
+
+    # ==========================================
+    # DRAW MENU
+    # ==========================================
 
     def draw(self, screen):
 
-        # =========================
-        # TITLE
-        # =========================
+        mouse_pos = pygame.mouse.get_pos()
 
+        # TITLE
         title = self.title_font.render(
             "SPACE INVADERS",
             True,
@@ -35,7 +118,7 @@ class Menu:
         title_rect = title.get_rect(
             center=(
                 SCREEN_WIDTH // 2,
-                200
+                int(SCREEN_HEIGHT * 0.35)
             )
         )
 
@@ -44,46 +127,43 @@ class Menu:
             title_rect
         )
 
-        # =========================
-        # START
-        # =========================
-
-        start = self.font.render(
-            "Press ENTER to Play",
-            True,
-            WHITE
+        # PLAY
+        self.draw_button(
+            screen,
+            "PLAY",
+            self.play_rect,
+            mouse_pos
         )
 
-        start_rect = start.get_rect(
-            center=(
-                SCREEN_WIDTH // 2,
-                330
-            )
+        # HIGH SCORE
+        self.draw_button(
+            screen,
+            "HIGH SCORE",
+            self.high_score_rect,
+            mouse_pos
         )
 
-        screen.blit(
-            start,
-            start_rect
+        # QUIT
+        self.draw_button(
+            screen,
+            "QUIT",
+            self.quit_rect,
+            mouse_pos
         )
 
-        # =========================
-        # EXIT
-        # =========================
+    # ==========================================
+    # HANDLE CLICK
+    # ==========================================
 
-        exit_text = self.font.render(
-            "Press ESC to Exit",
-            True,
-            WHITE
-        )
+    def handle_click(self, mouse_pos):
 
-        exit_rect = exit_text.get_rect(
-            center=(
-                SCREEN_WIDTH // 2,
-                380
-            )
-        )
+        if self.play_rect.collidepoint(mouse_pos):
+            return "PLAY"
 
-        screen.blit(
-            exit_text,
-            exit_rect
-        )
+        if self.high_score_rect.collidepoint(mouse_pos):
+            return "HIGH_SCORE"
+
+        if self.quit_rect.collidepoint(mouse_pos):
+            return "QUIT"
+
+        return None
