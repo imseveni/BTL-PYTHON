@@ -1,4 +1,5 @@
 import pygame
+
 from entities.bullet import Bullet
 from entities.explosion import Explosion
 
@@ -143,14 +144,11 @@ class BulletManager:
 
         return True
 
-    def add_explosion(self, x, y):
-        self.explosions.append(Explosion(x, y))
+    # ==================================================
+    # UPDATE
+    # ==================================================
 
-    def update(self, screen_height=600):
-        # 1. Cập nhật và dọn dẹp đạn người chơi
-        for b in self.player_bullets:
-            b.update()
-        self.player_bullets = [b for b in self.player_bullets if not b.is_outside(screen_height)]
+    def update(self):
 
         # ==================================================
         # PLAYER BULLET
